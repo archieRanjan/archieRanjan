@@ -1,0 +1,29 @@
+# Mirror of the constants hard-coded in code/sim.py, code/generate.py and code/experiments.py.
+# tests/test_config.py asserts that this file and the code agree.
+master_seed: 20261102
+n_episodes: {train: 600, pool: 1500, shift: 400}
+shift_load_range: [1.1, 1.35]
+twin_capacity_scale: 1.08
+thresholds: {iforest: [0.9, 0.95, 0.99, 0.995, 0.999], gbm: [0.5, 0.7, 0.85, 0.95, 0.99]}
+alpha: [0.05, 0.02, 0.05]
+delta: 0.1
+objective_weights_J: [0.3, 0.5, 0.2]
+selection_objective: attack
+n_cal: 500
+splits: 200
+split_seed: 7
+sim:
+  C: 100.0
+  g: [0.55, 0.25, 0.20]
+  buf: [200.0, 12.0, 60.0]
+  n_ue: [14, 10, 16]
+  T_OBS: 30
+  T_ACT: 120
+  p_attack: 0.6
+  max_attackers: 4
+  attack_slice_p: [0.45, 0.15, 0.40]
+  rl_cap: [3.0, 1.0, 0.5]
+  sla_embb_tput: 0.90
+  sla_urllc_delay: 2.0
+  sla_urllc_deliv: 0.99
+  sla_mmtc_deliv: 0.95

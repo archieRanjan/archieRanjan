@@ -1,0 +1,52 @@
+%% IEEE Transactions journal manuscript (IEEEtran, journal mode).
+%% Compile with the official IEEEtran class and IEEEtran.bst (TeX Live or Overleaf):
+%%   pdflatex main && bibtex main && pdflatex main && pdflatex main
+\documentclass[journal]{IEEEtran}
+\usepackage{amsmath,amssymb,amsfonts,graphicx,booktabs,algorithmic,algorithm,cite,url,array,xcolor}
+\usepackage[hidelinks]{hyperref}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\newtheorem{lemma}{Lemma}\newtheorem{proposition}{Proposition}
+\begin{document}
+\title{Certifying the Collateral Cost of Intrusion Response in Sliced 5G User Planes: Direct Risk Control Versus False-Positive Control}
+\author{[Author names and affiliations to be supplied]}
+\markboth{IEEE Transactions on Network and Service Management (submitted)}{Certifying Collateral Cost of Slice-Aware Intrusion Response}
+\maketitle
+\begin{abstract}
+Mitigating a flagged user equipment by rate-limiting or blocking it
+harms benign users whenever the detector errs, and in a sliced 5G user
+plane the harm depends on the slice and the action. Existing calibrated
+intrusion detectors certify alert-level false-positive rates, and
+intrusion-response methods offer only model-based guarantees. We ask
+whether certifying each slice's action-induced service-level-agreement
+(SLA) violation risk directly admits more attack mitigation than
+certifying each slice's false-positive rate at equal budgets and
+confidence. We define collateral risk against the no-action
+counterfactual and prove that, under a monotone scheduler, it is bounded
+by the per-slice acted-benign fraction. Per-slice false-positive
+certification is therefore also a collateral certificate, and any gain
+from direct certification must come from the ratio between the two. We
+certify 1331 per-slice rate-limit/block policies with Learn-then-Test
+risk control on replayed counterfactual outcomes, and evaluate in a
+fluid simulator of a three-slice egress link whose detector is deployed
+under domain shift. Over 200 calibration/test splits, no certified
+method exceeded its budgets, while empirically constrained selection did
+in 25.5\% of splits with 100 calibration episodes. With fixed-sequence
+testing, direct certification delivered 0.417 of attack traffic versus
+0.458 for false-positive certification, winning in 93.5\% of paired
+splits. The advantage vanished with small calibration sets, other budget
+levels, or Bonferroni control. Direct certification pays off only where
+harm ratios are well below one.
+\end{abstract}
+\begin{IEEEkeywords}
+Network slicing, intrusion response, risk control, Learn-then-Test, service-level agreements, false-positive control, 5G user plane
+\end{IEEEkeywords}
+\input{body}
+\section*{Acknowledgment}
+Simulation, analysis and drafting were carried out with the assistance of an AI coding assistant (Claude Code). All numbers are produced by the released code; all references carry a recorded verification status.
+\section*{Code and Data Availability}
+Code and data: \texttt{research/paper/} (simulator, experiments, raw
+logs, results JSON). No external datasets were used. Funding and
+competing interests: to be completed by the authors.
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}
