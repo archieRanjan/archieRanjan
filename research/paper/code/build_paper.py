@@ -126,9 +126,11 @@ def expand(text, mode):
     def figr(m):
         name, cap = m.group(1), m.group(2)
         if mode == "latex":
-            return ("\n```{=latex}\n\\begin{figure*}[!t]\\centering\\includegraphics[width=0.95\\textwidth]{figures/" + name +
-                    ".pdf}\\caption{" + cap + "}\\label{fig:" + name.replace("fig_", "") + "}\\end{figure*}\n```\n")
-        return f'\n<figure id="fig:{name}"><img src="{(FIG / (name + ".png")).as_posix()}"/><figcaption><b>Fig. {FIG_NO[name]}.</b> {cap}</figcaption></figure>\n'
+            env, width = ("figure", "\\columnwidth") if name in ("fig_forest", "fig_hetero") else ("figure*", "0.95\\textwidth")
+            return ("\n```{=latex}\n\\begin{" + env + "}[!t]\\centering\\includegraphics[width=" + width + "]{figures/" + name +
+                    ".pdf}\\caption{" + cap + "}\\label{fig:" + name.replace("fig_", "") + "}\\end{" + env + "}\n```\n")
+        return (f'\n::: {{.span .figbox #fig:{name}}}\n![]({(FIG / (name + ".png")).as_posix()}){{width=96%}}\n\n'
+                f'[**Fig. {FIG_NO[name]}.** {cap}]{{.figcap}}\n:::\n')
     text = re.sub(r"\{\{table:([A-Za-z_]+)\}\}", tab, text)
     text = re.sub(r"\{\{figure:([a-z_]+)\|(.+?)\}\}", figr, text)
     text = text.replace("{{algorithm}}", "\n```{=latex}\n" + ALGO_TEX + "\n```\n" if mode == "latex" else "\n" + ALGO_MD + "\n")

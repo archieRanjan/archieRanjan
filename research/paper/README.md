@@ -11,7 +11,8 @@
 | `tests/` | Unit and integration tests |
 | `data/`, `DATASET.md` | Synthetic loss tables and their provenance |
 | `logs/` | Raw run logs |
-| `results/`, `figs/` | Processed results, tables, figures |
+| `results/`, `results_confirm/` | Processed results and tables (exploratory; confirmatory) |
+| `figs/` | 12 figures as PDF + PNG; provenance in `figs/FIGURES.md` |
 | `manuscript/` | `main.tex` + `body.tex` + `references.bib` + `figures/` (IEEEtran), `manuscript.pdf` (preview), `manuscript_review.md`, `submission_readiness.md` |
 | `experiment_reproduction.md` | How to reproduce everything |
 

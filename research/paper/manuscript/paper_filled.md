@@ -160,6 +160,16 @@ certificate</td>
 
 # System Model and Formulation {#sec:model}
 
+Fig. 1 shows the system: detector, certified policy, per-UE enforcement at the UPF, the slice scheduler and, for Study N, the scrubbing hairpin.
+
+
+::: {.span .figbox #fig:fig_system}
+![](/home/user/archieRanjan/research/paper/figs/fig_system.png){width=96%}
+
+[**Fig. 1.** System model. The detector scores UEs on the observation window; the certified policy maps scores to per-slice actions enforced per UE at the UPF; the egress scheduler serves slices by weighted water-filling with guarantees $g_sC$ and buffers $B_s$. In Study N a redirected UE's traffic enters a borrow-only scrubbing class, and its benign part re-enters its slice one slot later (dashed).]{.figcap}
+:::
+
+
 **User plane.** An egress link of capacity $C$ serves slices $s\in\mathcal{S}$, each with a guaranteed rate $g_sC>0$ (with $\sum_s g_s\le1$), a leftover-sharing weight $w_s=g_s$ and a buffer $B_s$. In each slot the scheduler allocates
 $$x_s=\min\big(a_s,\;g_sC+w_s\theta\big),$$
 where $a_s$ is backlog plus arrivals and the water level $\theta$ is the largest value for which $\sum_s x_s\le C$. Overflow beyond $B_s$ is dropped. Drop fraction and queueing delay are shared by the UEs of a slice.
@@ -225,6 +235,17 @@ The deployed policy minimises empirical $\hat{R}^a$ over the certified set, with
 3. Return argmin<sub>λ∈Λ̂</sub> R̂<sup>a</sup>(λ), or π<sub>0</sub> if Λ̂ is empty.</div>
 
 
+Fig. 2 contrasts the procedure with the Slice-FPR baseline, which needs only benign scores and no replay.
+
+
+::: {.span .figbox #fig:fig_workflow}
+![](/home/user/archieRanjan/research/paper/figs/fig_workflow.png){width=96%}
+
+[**Fig. 2.** Certification workflow of RC-SIR-FS (steps 1–6) and the Slice-FPR baseline. Only the direct procedure requires counterfactual replay of every policy; only its guarantee holds without monotonicity.]{.figcap}
+:::
+
+
+
 **Proposition 1 (validity).** Under A1–A2, both variants satisfy $\Pr\{\forall s:R^c_s(\hat{\lambda})\le\alpha_s\}\ge1-\delta$. No monotonicity is required.
 
 *Proof.* $p_\lambda$ is valid for $H_\lambda$, because it dominates the valid p-value of a violating slice. Bonferroni, and fixed-sequence testing with an ordering independent of the testing half, control the family-wise error. On the complement of a family-wise error, every certified policy is feasible, so selection among them preserves the guarantee. $\pi_0$ has zero collateral. ∎
@@ -257,6 +278,16 @@ This is a direct consequence of LTT.
 
 This models cross-domain degradation [@layeghy2023xcross]. The detector is an Isolation Forest [@liu2008iforest] trained on benign benchmark-regime UEs; its score is the benign-training quantile. Thresholds are $\{0.9,0.95,0.99,0.995,0.999\}$. Implementation uses scikit-learn [@pedregosa2011sklearn].
 
+Fig. 3 shows the resulting detector. On the deployment pool, its within-slice discrimination ranges from near chance in eMBB, where heavy benign users resemble floods, to near perfect in mMTC. This heterogeneity is what makes per-slice certification relevant.
+
+
+::: {.span .figbox #fig:fig_detector}
+![](/home/user/archieRanjan/research/paper/figs/fig_detector.png){width=96%}
+
+[**Fig. 3.** Primary detector on the 1500-episode deployment pool of the exploratory study. Left: per-slice ROC curves (false-positive axis log-linear); dots mark the five grid thresholds pooled over slices. Right: score distributions of benign UEs per slice and of attackers (log density); dotted lines are the grid thresholds.]{.figcap}
+:::
+
+
 **Fixed settings.** $\alpha=(0.05,0.02,0.05)$, $\delta=0.1$, $n=500$ calibration episodes.
 
 **Exploratory study (v1).**
@@ -268,7 +299,15 @@ This models cross-domain degradation [@layeghy2023xcross]. The detector is an Is
 
 During this study we made two design changes, both disclosed in Appendix [B](#app:deviations): we replaced a first simulator version, and we corrected the selection objective. We also chose the fixed-sequence variant after seeing results.
 
-**Confirmatory studies.** Their analysis plan was committed to the repository before any confirmatory data existed, and was not modified.
+
+::: {.span .figbox #fig:fig_study_design}
+![](/home/user/archieRanjan/research/paper/figs/fig_study_design.png){width=96%}
+
+[**Fig. 4.** Study design. The exploratory study preceded a committed analysis plan; Studies C and N used only seeds and data generated after that commit, with method, endpoints and decision rule frozen.]{.figcap}
+:::
+
+
+**Confirmatory studies (Fig. 4).** Their analysis plan was committed to the repository before any confirmatory data existed, and was not modified.
 
 **Study C** (eight independent replications, new seeds):
 
@@ -423,13 +462,23 @@ Model-based response policies [@hammar2022optimalstopping] optimise a different 
 ```
 
 
-- **Validity.** No certified method exceeded its budgets in 200 splits. ERM violated them in 10.0% of splits at $n=500$ (equal to $\delta$) and in 25.5% at $n=100$ (Fig. 1).
+- **Validity.** No certified method exceeded its budgets in 200 splits. ERM violated them in 10.0% of splits at $n=500$ (equal to $\delta$) and in 25.5% at $n=100$ (Fig. 6).
 - **Direct vs FPR certification.** RC-SIR-FS delivered 0.417 of attack traffic, against 0.458 for Slice-FPR; it was better in 93.5% of paired splits (Table 3).
 - **Bonferroni variant.** It was worse than Slice-FPR in every split.
 - **Where the advantage vanishes.** It disappeared at $n\le250$ and at budgets scaled by 0.5 or 2.
 - **Action set.** Rate-limiting added nothing over block-only policies (0.417 vs 0.418).
-- **Harm ratios.** Measured over single-slice policies, they were about 0.54 in eMBB, 0.95 in URLLC and 0.99 for blocking in mMTC. Consistent with Remark 1, the gain came from eMBB.
+- **Harm ratios.** Measured over single-slice policies, they were about 0.54 in eMBB, 0.95 in URLLC and 0.99 for blocking in mMTC. Consistent with Remark 1, the gain came from eMBB (Fig. 5).
+
+
 - **Twin calibration.** Calibrating on a twin with an 8% capacity error produced no violations without correction. The rigorous twin-error correction (a union-bound Hoeffding term of about 0.14 at 300 paired episodes) exceeded every budget, so twin-based certification with a guarantee was not practical here.
+
+
+::: {.span .figbox #fig:fig_harm}
+![](/home/user/archieRanjan/research/paper/figs/fig_harm.png){width=96%}
+
+[**Fig. 5.** Measured harm ratio $\rho_s=R^c_s/\Phi_s$ for single-slice policies (exploratory pool, 1500 episodes). Values below 1 indicate room for direct certification (Remark 1). URLLC and blocking in mMTC are near 1; rate-limiting in mMTC is nearly harmless. "n/a": no benign UE reaches the threshold.]{.figcap}
+:::
+
 
 
 ```{=html}
@@ -509,14 +558,38 @@ splits</th>
 
 
 
-<figure id="fig:fig_ncal"><img src="/home/user/archieRanjan/research/paper/figs/fig_ncal.png"/><figcaption><b>Fig. 1.</b> Exploratory study. Left: budget-violation frequency versus calibration size (dashed: $\delta$). Right: delivered attack fraction.</figcaption></figure>
+::: {.span .figbox #fig:fig_ncal}
+![](/home/user/archieRanjan/research/paper/figs/fig_ncal.png){width=96%}
+
+[**Fig. 6.** Exploratory study. Left: budget-violation frequency versus calibration size (dashed: $\delta$). Right: delivered attack fraction.]{.figcap}
+:::
 
 
 ## Confirmatory Study C (independent replications)
 
-**Validity.** Pooled over 400 splits, RC-SIR-FS, RC-SIR, Slice-FPR and Pooled LTT never exceeded a budget (95% Clopper–Pearson upper bound 0.009). ERM exceeded one in 0.003 of splits. No violation of any method was "confident", i.e. distinguishable from test-set sampling error.
+**Validity (Fig. 7).** Pooled over 400 splits, RC-SIR-FS, RC-SIR, Slice-FPR and Pooled LTT never exceeded a budget (95% Clopper–Pearson upper bound 0.009). ERM exceeded one in 0.003 of splits. No violation of any method was "confident", i.e. distinguishable from test-set sampling error.
 
-**Primary endpoint (not confirmed).** The mean paired difference in delivered attack fraction, RC-SIR-FS minus Slice-FPR, was -0.030, with 95% t-interval [-0.071, +0.011]. 6 of 8 replications favoured RC-SIR-FS (exact sign test $p=0.29$). The pre-registered criterion (upper bound below zero and at least 7 of 8 replications) was not met.
+
+
+::: {.span .figbox #fig:fig_tradeoff}
+![](/home/user/archieRanjan/research/paper/figs/fig_tradeoff.png){width=96%}
+
+[**Fig. 7.** Study C. Left: per replication, delivered attack fraction against realised collateral relative to its budget (worst slice); grey lines connect the three methods of one replication. Certified methods used under half of their budgets; ERM used more and mitigated more. Right: budget-violation frequency over 400 splits with 95% Clopper–Pearson intervals; the dashed line is $\delta$.]{.figcap}
+:::
+
+
+
+**Primary endpoint (not confirmed; Fig. 8).** The mean paired difference in delivered attack fraction, RC-SIR-FS minus Slice-FPR, was -0.030, with 95% t-interval [-0.071, +0.011]. 6 of 8 replications favoured RC-SIR-FS (exact sign test $p=0.29$). The pre-registered criterion (upper bound below zero and at least 7 of 8 replications) was not met.
+
+
+
+::: {.span .figbox #fig:fig_forest}
+![](/home/user/archieRanjan/research/paper/figs/fig_forest.png){width=96%}
+
+[**Fig. 8.** Study C primary endpoint. Per replication: mean paired difference in delivered attack fraction (RC-SIR-FS minus Slice-FPR) over 50 splits, with the 2.5–97.5% range across splits. Right column: share of splits in which RC-SIR-FS was better. Bottom: mean over the eight replications with its 95% t-interval, which includes zero.]{.figcap}
+:::
+
+
 
 The effect was heterogeneous (Table 4):
 
@@ -529,7 +602,17 @@ The effect was heterogeneous (Table 4):
 - The Bonferroni variant was worse than Slice-FPR: +0.051, interval [+0.009, +0.092].
 - Uncertified ERM delivered less attack traffic than RC-SIR-FS: RC-SIR-FS minus ERM was +0.052, interval [+0.011, +0.093]. That is the price of the certificate in scenarios where the budgets are slack.
 
-**Heterogeneity (post hoc, exploratory).** We counted the eMBB, URLLC and mMTC thresholds in each replication's population at which the FPR test needs more margin than the collateral test. These are thresholds where the acted fraction exceeds $\alpha_s/2$ while collateral stays below $\alpha_s/2$, or where the acted fraction exceeds $\alpha_s$ while collateral stays below it. The count correlated with the gain (Spearman $\rho=-0.85$, eight replications). The three replications without such thresholds showed no gain. This agrees with Remark 1 but was not pre-registered.
+**Heterogeneity (post hoc, exploratory).** We counted the eMBB, URLLC and mMTC thresholds in each replication's population at which the FPR test needs more margin than the collateral test. These are thresholds where the acted fraction exceeds $\alpha_s/2$ while collateral stays below $\alpha_s/2$, or where the acted fraction exceeds $\alpha_s$ while collateral stays below it. The count correlated with the gain (Fig. 9; Spearman $\rho=-0.85$, eight replications). The three replications without such thresholds showed no gain. This agrees with Remark 1 but was not pre-registered.
+
+
+
+::: {.span .figbox #fig:fig_hetero}
+![](/home/user/archieRanjan/research/paper/figs/fig_hetero.png){width=96%}
+
+[**Fig. 9.** Post hoc, exploratory: per-replication gain against the number of thresholds in the Remark 1 band (horizontal jitter added). Replications without such thresholds show no gain.]{.figcap}
+:::
+
+
 
 
 ```{=html}
@@ -787,14 +870,22 @@ The effect was heterogeneous (Table 4):
 
 ## Confirmatory Study N (relocating actions)
 
-**N-H1 (supported).** Under redirection, collateral exceeded the acted-benign fraction in 1.0% of episode–policy–slice entries, by up to 0.93. Two examples:
+**N-H1 (supported; Fig. 10).** Under redirection, collateral exceeded the acted-benign fraction in 1.0% of episode–policy–slice entries, by up to 0.93. Two examples:
 
 - Redirecting in eMBB at threshold 0.995 gave eMBB collateral 0.0272 against an acted fraction of 0.0146.
 - Redirecting in eMBB at 0.95 caused URLLC collateral of 0.0055, although no URLLC UE was acted on.
 
+
+::: {.span .figbox #fig:fig_lemma}
+![](/home/user/archieRanjan/research/paper/figs/fig_lemma.png){width=96%}
+
+[**Fig. 10.** Collateral against acted-benign fraction for every (policy, slice) pair, population values. Left: traffic-removing actions (exploratory pool); no pair lies above the bound $R^c_s=\Phi_s$ (Lemma 1). Right: block/redirect (Study N); pairs above the bound include slices with $\Phi_s=0$ harmed by redirection in other slices. Inset: zoom near the origin.]{.figcap}
+:::
+
+
 **N-H2 (not supported).** Slice-FPR with redirection violated its budgets in 0.000 of 200 splits (95% CI up to 0.018). The finite-sample margin of the FPR test kept it at conservative thresholds, where the excess collateral stayed below the budgets.
 
-A post-hoc large-sample analysis (not pre-registered) treats all 1500 episodes as the population:
+A post-hoc large-sample analysis (not pre-registered; Fig. 11) treats all 1500 episodes as the population:
 
 - **Redirect study:** 31 of the 441 policies that satisfy the per-slice FPR criterion have collateral above a budget, all of them involving redirection. The largest excess is 0.0044.
 - **Monotone study:** the corresponding count is 0, as Lemma 1 requires.
@@ -802,6 +893,14 @@ A post-hoc large-sample analysis (not pre-registered) treats all 1500 episodes a
 The FPR certificate is therefore invalid in principle under relocation. In this model the error was small enough to be masked by statistical slack.
 
 **N-H3 (supported).** RC-SIR-FS violated in 0.000 of splits (CI up to 0.018). It also delivered less attack traffic (0.448) than Slice-FPR with redirection (0.533) or with blocking (0.546). This utility comparison is exploratory. ERM violated in 3.5% of splits.
+
+
+::: {.span .figbox #fig:fig_study_n}
+![](/home/user/archieRanjan/research/paper/figs/fig_study_n.png){width=96%}
+
+[**Fig. 11.** Study N. Left: each of the 1331 policies by its FPR criterion ($\max_s\Phi_s/\alpha_s$) and its true collateral ($\max_s R^c_s/\alpha_s$), population values (post hoc). The shaded region holds policies that the FPR criterion accepts but whose collateral exceeds a budget; all such policies include redirection. Right: finite-sample outcomes over 200 splits (pre-registered).]{.figcap}
+:::
+
 
 
 ```{=html}

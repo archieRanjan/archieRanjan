@@ -10,3 +10,4 @@
 
 **Next steps (human):** see `manuscript/submission_readiness.md`.
 8. External audit received → plan v2 pre-registered (d5518c3) → Studies C and N run → primary claim not confirmed → manuscript reframed (new title, narrowed claim, Theorem 1 proof, Proposition 0, confirmatory sections, appendices). Records: `manuscript/audit_response.md`, `research_decisions.md` R-13 to R-19.
+9. Added 3 methodology diagrams + 8 data figures (code/figures.py, figs/FIGURES.md); 11 figures in the manuscript.

@@ -48,6 +48,12 @@ python3 -I code/confirm_analysis.py
 
 `confirm_analysis.py` writes `results_confirm/results_confirm.json` and `results_confirm/tables/`. Manuscript placeholders that start with `confirm::` resolve from that file.
 
+**Figures** (methodology diagrams and data figures; provenance in `figs/FIGURES.md`):
+
+```bash
+python3 -I code/figures.py
+```
+
 **Traceability:** every number in `manuscript/paper.md` is a placeholder `{{path::to::key@format}}` resolved from `results/results.json`. `paper_filled.md` shows the resolved text. Search `paper.md` for a number's placeholder to find its source key.
 
 **Compiling the IEEE PDF:** this environment has no TeX. On a TeX installation with IEEEtran, run:
