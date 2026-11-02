@@ -1,0 +1,19 @@
+# Research Decision Log — Checkpoint 1
+
+Each entry records the date, the decision, the evidence behind it, the evidence level, and what would reverse it.
+
+| ID | Date | Decision | Evidence | Level | Reversal condition |
+|---|---|---|---|---|---|
+| D-01 | 2026-11-02 | Treat the team's prior work and testbed as **unverified**. | Repository `archieranjan/archieranjan` was empty: no commits, manuscripts, code, configs, or logs. | Verified | Team uploads the artefacts or grants testbed access (G-01, G-06). |
+| D-02 | 2026-11-02 | Use web search as the only literature channel; leave DOIs blank unless seen in a record. | arxiv.org, doi.org, Crossref, OpenAlex, and Semantic Scholar all blocked (403 or DNS failure) by the session network policy. | Verified | Network policy allows these hosts → re-verify every V-META and PARTIAL entry. |
+| D-03 | 2026-11-02 | Count 72 usable papers and preprints against the ≥60 target, but rate the landscape **screening-grade, not review-grade**. | 24 V-DOI, 20 V-META, 19 V-PRE, 11 PARTIAL, 1 UNVERIFIED (the 75 entries include 2 software artefacts); no full text read. | Verified | — |
+| D-04 | 2026-11-02 | Screen out PHY/ISAC/RIS topics early. | No evidence of SDR, RAN, or PHY infrastructure; the brief forbids unsupported infrastructure assumptions. | Inference | Team confirms SDR, RAN, or RIC access. |
+| D-05 | 2026-11-02 | **Reject C2** (slice-stratified conformal FPR control for NIDS). | CALIBURN (arXiv 2605.24696), FIRCE (arXiv 2605.01962), ConFID (Elsevier IoT 2026), robust conformal IDS (arXiv 2609.19241), C-PP-COAD (arXiv 2505.01783), Bates et al. AoS 2023, TRANSCENDENT S&P 2022. | Verified (abstract level) | A full-text read shows that none of these offers per-group guarantees *and* the slice structure adds non-trivial theory (unlikely). |
+| D-06 | 2026-11-02 | **Reject C4** (leakage benchmark) as the main contribution; keep it as infrastructure for C1. | Possible overlap with the team's own leakage work; the tvquynh 5G-NIDD realistic-evaluation package exists. | Inference | Team's prior work turns out not to cover 5G-NIDD or cross-testbed transfer. |
+| D-07 | 2026-11-02 | **Reject C5, C7, C8** for infrastructure reasons. | No RAN, RIC, or SDR verified; PACIFISTA (TMC 2025) for C5; Shi et al., Tashman 2026, Wang 2023 for C7. | Verified (infra) / Verified (prior work) | RAN access is obtained. |
+| D-08 | 2026-11-02 | **Reject C9, C11**. | C9 crowded (Lavaur TNSM 2022, FLAccShield 2026); C11 unfalsifiable without operator data. | Inference | — |
+| D-09 | 2026-11-02 | **Shortlist C1, C3, C6**; provisional primary **C1**, backup **C3**. | Weighted scores 7.45, 6.80, 6.45 (`data/candidate_ranking.csv`); adversarial audit in Section 6 of the report. | Inference | Phase 1 full-text audit finds claim K2 or K5 already covered → promote C3. |
+| D-10 | 2026-11-02 | Lower C1's novelty score from 9 to 7 after finding CORA and Conformal Policy Control (risk-controlled action gating exists in non-network domains). | arXiv 2604.09155, arXiv 2603.02196. | Verified (existence) | — |
+| D-11 | 2026-11-02 | Choose an emulated sliced core plus trace replay (not simulation-only, not a physical RAN) as the C1 validation path. | The claims concern core- and user-plane mitigation and per-slice KPIs; pure simulation cannot capture enforcement and queueing effects. | Inference | The team testbed proves to have no programmable UPF enforcement → use an Open5GS emulation only. |
+| D-12 | 2026-11-02 | Do **not** generate any experimental results or manuscript results sections. | Mission brief §12 (STOP after the checkpoint) and §13 (integrity). | — | Direction approved by the team. |
+| D-13 | 2026-11-02 | Mark CALM-5G (arXiv 2610.17962) UNVERIFIED and exclude it from the usable count. | Seen in one snippet only; a direct search failed. | Verified (the failure) | Identifier resolves. |

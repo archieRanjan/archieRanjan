@@ -1,0 +1,21 @@
+title: "Discovering a Defensible 5G/6G Research Problem: Checkpoint 1 Report on Certified Collateral-Risk Control for Slice-Aware Intrusion Response"
+short_title: "Checkpoint 1: Slice-Aware Risk-Controlled Intrusion Response"
+authors: "[Author names and affiliations to be supplied by the research team]"
+date: "2 November 2026"
+abstract: >-
+  We report Checkpoint 1 of an independent research-discovery mission whose goal is a novel, feasible,
+  and defensible IEEE Transactions-level problem in 5G/6G networks. We screened 75 sources across ten
+  research clusters; 72 papers and preprints are usable, each recorded with verification status and
+  provenance in a reusable structured bibliography. From them we generated eleven candidate problems,
+  scored them with a fixed weighted rubric, and applied mandatory rejection criteria. Six candidates
+  were rejected and five retained; the top three went to an adversarial novelty audit. The audit shows
+  that detection-level conformal false-alarm control for intrusion detection, the direction closest to
+  the team's prior work, became crowded in 2025-2026, so we reject it as a primary topic. We
+  provisionally recommend certified collateral-risk control for slice-aware intrusion response: a
+  multi-action mitigation policy calibrated, through multiple-testing risk control, so that the
+  oracle-counterfactual SLA-violation risk imposed on benign users of each slice stays within a
+  slice-specific budget with a finite-sample, distribution-free guarantee. Our backup is SLA-weighted
+  multi-slice quickest attack detection. The report states falsifiable hypotheses, baselines, and
+  minimum evidence, and lists the access gaps that block final novelty claims. It contains no
+  experimental results.
+keywords: "5G network slicing, intrusion response, conformal risk control, learn-then-test, service-level agreements, research methodology"

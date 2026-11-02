@@ -1,0 +1,12 @@
+id,short_name,novelty,significance,feasibility,rigor,validation,fit,hard_reject,reject_reason,weighted
+C1,Risk-controlled slice-aware intrusion response (collateral-SLA certified mitigation),7,8,7,8,7,8,no,,7.45
+C3,SLA-weighted multi-slice quickest attack detection with coupled streams,6,7,7,8,6,7,no,,6.8
+C6,Calibrated-uncertainty GNN digital twin for slice SLA prediction,6,7,6,7,6,7,no,,6.45
+C10,Adversarially robust 5GC PFCP control-plane anomaly detection,4,7,6,6,6,6,no,,5.7
+C4,Leakage-audited cross-testbed generalisation benchmark for 5G NIDS,4,6,8,5,7,5,yes,Likely overlaps the team's own prior leakage-audit work; a 5G-NIDD realistic-split package already exists (tvquynh),5.75
+C2,Slice-stratified conformal false-alarm control for 5G NIDS (detection only),3,6,8,6,7,5,yes,"Gap contradicted by prior work: CALIBURN, ConFID, FIRCE, TRANSCENDENT, Bates et al. 2023",5.65
+C8,Uncertainty-aware RAN sleep-mode / energy control,5,8,2,6,3,7,yes,No RAN or energy-measurement access; credible only in simulation,5.15
+C5,Conflict-aware xApp composition with performance guarantees,4,8,2,7,3,7,yes,No RAN or RIC infrastructure verified; PACIFISTA covers conflict detection,5.05
+C9,Federated slice-level IDS under non-IID data,3,5,7,5,5,4,yes,"Crowded (Lavaur survey 2022, FLAccShield 2026, Djaidja et al.); no identifiable new contribution",4.8
+C7,Adversarial robustness of DRL RAN-slicing controllers,4,7,2,6,3,6,yes,"Needs PHY/RAN or SDR (not available); crowded (Shi et al., Tashman 2026, Wang 2023)",4.6
+C11,LLM-driven intent-based slice orchestration,3,6,5,4,4,5,yes,Hype-driven; unfalsifiable evaluation without operator data; no defensible gap identified,4.45

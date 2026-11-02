@@ -1,0 +1,46 @@
+%% Springer Nature journal template (sn-jnl), numeric math/physics reference style.
+%% Requires sn-jnl.cls and sn-mathphys-num.bst from the official Springer Nature LaTeX template
+%% (https://www.springernature.com/gp/authors/campaigns/latex-author-support). Compile:
+%%   pdflatex sn-checkpoint1 && bibtex sn-checkpoint1 && pdflatex sn-checkpoint1 && pdflatex sn-checkpoint1
+\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}
+\usepackage{graphicx,multirow,amsmath,amssymb,amsfonts,amsthm,mathrsfs,xcolor,textcomp,manyfoot,booktabs}
+\usepackage{longtable,array,calc,pifont}
+\usepackage[title]{appendix}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\raggedbottom
+
+\begin{document}
+
+\title[Checkpoint 1: Slice-Aware Risk-Controlled Intrusion Response]{Discovering a Defensible 5G/6G Research Problem: Checkpoint 1 Report on Certified Collateral-Risk Control for Slice-Aware Intrusion Response}
+
+\author*[1]{\fnm{[Author]} \sur{[To be supplied]}}\email{[to be supplied]}
+\affil*[1]{\orgname{[Affiliation to be supplied]}}
+
+\abstract{We report Checkpoint 1 of an independent research-discovery mission whose goal is a novel, feasible, and defensible IEEE Transactions-level problem in 5G/6G networks. We screened 75 sources across ten research clusters; 72 papers and preprints are usable, each recorded with verification status and provenance in a reusable structured bibliography. From them we generated eleven candidate problems, scored them with a fixed weighted rubric, and applied mandatory rejection criteria. Six candidates were rejected and five retained; the top three went to an adversarial novelty audit. The audit shows that detection-level conformal false-alarm control for intrusion detection, the direction closest to the team's prior work, became crowded in 2025-2026, so we reject it as a primary topic. We provisionally recommend certified collateral-risk control for slice-aware intrusion response: a multi-action mitigation policy calibrated, through multiple-testing risk control, so that the oracle-counterfactual SLA-violation risk imposed on benign users of each slice stays within a slice-specific budget with a finite-sample, distribution-free guarantee. Our backup is SLA-weighted multi-slice quickest attack detection. The report states falsifiable hypotheses, baselines, and minimum evidence, and lists the access gaps that block final novelty claims. It contains no experimental results.}
+
+\keywords{5G network slicing, intrusion response, conformal risk control, learn-then-test, service-level agreements, research methodology}
+
+\maketitle
+
+\input{body}
+
+\bmhead{Acknowledgements}
+Literature screening, structuring and drafting were carried out with the assistance of an AI research
+assistant (Claude Code). All bibliographic records carry an explicit verification status; no reference,
+DOI or result was generated without a retrieved source.
+
+\section*{Declarations}
+\begin{itemize}
+\item \textbf{Funding:} Not applicable / to be completed by the authors.
+\item \textbf{Competing interests:} The authors declare no competing interests (to be confirmed).
+\item \textbf{Ethics approval and consent to participate:} Not applicable (no human or animal data).
+\item \textbf{Data availability:} The structured bibliography, literature matrix and scoring data are in
+  \texttt{research/checkpoint1/data/}. No experimental data were generated at this checkpoint.
+\item \textbf{Code availability:} \texttt{research/checkpoint1/scripts/} (bibliography generation, ranking,
+  report build).
+\item \textbf{Author contribution:} To be completed by the authors.
+\end{itemize}
+
+\bibliography{references}
+
+\end{document}

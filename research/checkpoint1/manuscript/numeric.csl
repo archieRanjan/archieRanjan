@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" class="in-text" version="1.0" default-locale="en-GB">
+  <info><title>Numeric (Springer basic-like, minimal)</title><id>local-numeric</id><updated>2026-11-02T00:00:00+00:00</updated></info>
+  <macro name="author"><names variable="author"><name initialize-with=". " delimiter=", " name-as-sort-order="all" sort-separator=" " and="text" delimiter-precedes-last="never"/><substitute><text variable="title"/></substitute></names></macro>
+  <citation collapse="citation-number"><sort><key variable="citation-number"/></sort>
+    <layout prefix="[" suffix="]" delimiter=", "><text variable="citation-number"/></layout></citation>
+  <bibliography second-field-align="flush" entry-spacing="0">
+    <layout suffix=".">
+      <text variable="citation-number" prefix="" suffix=". "/>
+      <text macro="author" suffix=": "/>
+      <text variable="title" suffix=". "/>
+      <group delimiter=" "><choose><if variable="container-title"><text variable="container-title" font-style="italic"/></if><else><text variable="publisher" font-style="italic"/></else></choose><text variable="volume" font-weight="bold"/>
+        <text variable="issue" prefix="(" suffix=")"/></group>
+      <text variable="page" prefix=", "/>
+      <date variable="issued" prefix=" (" suffix=")"><date-part name="year"/></date>
+      <text variable="DOI" prefix=". https://doi.org/"/>
+      <text variable="note" prefix=" [" suffix="]"/>
+      <choose><if variable="DOI" match="none"><text variable="URL" prefix=". "/></if></choose>
+    </layout>
+  </bibliography>
+</style>
