@@ -1,157 +1,156 @@
 # Introduction {#sec:intro}
 
-Network slicing places services with very different tolerances on shared user-plane resources. A URLLC slice tolerates a few milliseconds of queueing; an eMBB slice is judged on sustained throughput; an mMTC slice on delivery of sparse reports. When an intrusion detector flags a user equipment (UE), the operator can rate-limit or block its traffic at the user-plane function (UPF). Neither action is free. A benign UE that is wrongly blocked loses its service, and a rate-limited bursty URLLC client misses its deadline. The cost of a false alarm is therefore set by the *action* taken and by the *slice* in which it is taken, not by the alarm alone [@sommer2010outside; @arp2022dos].
+When an intrusion detector flags a user equipment (UE) in a sliced 5G network, the operator can rate-limit, block or redirect its traffic at the user-plane function (UPF). Each action harms benign users whenever the detector is wrong. How much harm depends on the action and on the slice: a blocked eMBB download degrades throughput, while a few slots of extra queueing break a URLLC deadline. Operators are accountable for this service-level harm, not for the false-alarm rate as such [@sommer2010outside; @arp2022dos].
 
-Recent work has made the false-alarm side of intrusion detection statistically controllable. Conformal outlier tests give finite-sample false-positive or false-discovery guarantees [@bates2023outliers]. Several 2025–2026 detectors calibrate alert thresholds against an explicit false-positive budget using conformal risk control or conformal evaluation [@youssef2026caliburn; @barrett2026firce; @farzaneh2025ccoad; @barbero2022transcendent]. What these methods certify is an *alert-level* quantity. Intrusion-response work, conversely, optimises the choice of defensive actions, but with model-based guarantees that hold only relative to an assumed attacker and system model [@hammar2022optimalstopping; @hammar2024dynamic; @zonouz2014rre]. Neither line of work certifies the quantity an operator of a sliced network is accountable for: the fraction of benign users in each slice whose service-level agreement (SLA) is broken *because of* the mitigation.
+Two lines of work address parts of the problem:
 
-This paper asks one question:
+- **Calibrated detection.** Finite-sample guarantees on false-positive or false-discovery rates [@bates2023outliers], including recent detectors that calibrate alert thresholds by conformal risk control [@youssef2026caliburn; @barrett2026firce; @farzaneh2025ccoad]. These certify an *alert-level* quantity.
+- **Intrusion response.** Optimised defensive actions, with guarantees that hold relative to an assumed attacker and system model [@hammar2022optimalstopping; @hammar2024dynamic; @zonouz2014rre].
 
-> *In a sliced 5G user plane where detector-triggered mitigation is calibrated offline, does certifying each slice's action-induced SLA-violation risk directly admit more attack mitigation than certifying each slice's false-positive rate, at the same per-slice budgets and confidence level, and under what conditions?*
+Neither certifies, without a model, the fraction of benign users in each slice whose service-level agreement (SLA) is broken *by the mitigation*.
 
-The question is not rhetorical. We show (Lemma 1) that when the user-plane scheduler is *monotone* (removing traffic never worsens the service of other UEs), the action-induced collateral of a slice is bounded by its acted-benign fraction. A per-slice false-positive-rate certificate is then also a valid collateral certificate. Direct certification can only win through the gap between the two, which we call the *harm ratio*, and must pay for it with a larger hypothesis space and the need to evaluate counterfactual outcomes.
+This paper studies one question:
+
+> *For detector-triggered mitigation in a sliced user plane, when does certifying each slice's action-induced SLA-violation risk directly admit more attack mitigation than certifying each slice's false-positive rate, at equal per-slice budgets and confidence?*
+
+We do not claim to improve intrusion response in general. The comparison is between two ways of obtaining the same kind of guarantee.
+
+The answer turns on a structural property of the user plane. If every action only *removes* traffic and the scheduler is a work-conserving weighted water-filling scheduler with per-slice buffers, then removing traffic never worsens the service of any other UE (Theorem 1). A per-slice false-positive certificate is then also a valid collateral certificate. Direct certification can gain only through the *harm ratio* between collateral and acted-benign fraction, and it pays for that with counterfactual replay and a larger hypothesis space. If an action *relocates* traffic, as redirection to a scrubbing service over the shared link does, the property fails, and the false-positive certificate can accept policies whose collateral exceeds the budget.
 
 **Contributions.**
 
-1. We formalise *action-induced collateral risk* per slice against the no-action counterfactual, and prove that under scheduler monotonicity it is upper-bounded by the per-slice acted-benign fraction (Lemma 1). This identifies per-slice certified false-positive control as the correct strong baseline and isolates the harm ratio as the only source of possible gain (Remark 1).
-2. We give a replay-based certification procedure, RC-SIR, that applies Learn-then-Test (LTT) risk control [@angelopoulos2025ltt] over a space of 1331 per-slice multi-action policies. It uses union-null p-values across slices and either Bonferroni or data-split fixed-sequence family-wise error control. We also prove a transfer result for calibrating on a replay twin with bounded error (Proposition 2). The statistical machinery is existing; the contribution is the formulation, the structural result that determines when the machinery helps, and its measured consequences.
-3. We report a reproducible simulation study of a three-slice user plane with a detector deployed under domain shift (Isolation Forest, pool AUC 0.892). Over 200 calibration/test splits:
-    - No certified method exceeded its budgets.
-    - Uncalibrated constrained selection did, in 25.5% of splits at 100 calibration episodes.
-    - With fixed-sequence testing, direct certification delivered 0.417 of attack traffic, against 0.458 for per-slice FPR certification (better in 93.5% of paired splits).
-    - The advantage disappears with small calibration sets, at halved or doubled budgets, and with Bonferroni control. Multi-action policies brought no measurable benefit.
+1. **Formulation and structure.** We define per-slice action-induced collateral against the no-action counterfactual. We prove (Theorem 1, Appendix [A](#app:proof)) that the scheduler used in our evaluation is monotone, so collateral is bounded by the acted-benign fraction (Lemma 1). We also show by construction that relocating actions break this bound, including across slices.
+2. **Certification procedure.** RC-SIR applies Learn-then-Test (LTT) [@angelopoulos2025ltt] over 1331 per-slice policies, with union-null p-values and fixed-sequence family-wise error control. The machinery is existing and used unchanged. We verify its implementation against known-risk Monte Carlo cases.
+3. **Evidence, with pre-registered confirmation.** An exploratory study, followed by a confirmatory analysis plan committed before data generation:
+    - eight independent replications with randomised scenarios (Study C);
+    - a non-monotone action study (Study N).
 
-All results come from a fluid simulator, not from a 5G testbed. Section [8](#sec:limits) discusses what this does and does not establish.
+    Certified methods kept every budget in all 400 confirmatory splits. The pre-registered improvement claim of direct over FPR certification was **not confirmed**: the mean paired difference in delivered attack fraction was -0.030, with 95% interval [-0.071, +0.011], and 6 of 8 replications favoured direct certification. Under relocating actions, a post-hoc large-sample analysis shows the FPR criterion accepting policies whose collateral exceeds the budget. No finite-sample violation was observed (pre-registered hypothesis N-H2 not supported), and direct certification stayed valid.
+
+All evidence comes from a fluid simulator. Section [8](#sec:limits) states what this does not establish.
 
 # Related Work {#sec:related}
 
-**Evaluation validity of ML-based intrusion detection.**
+**Validity of ML-based intrusion detection.**
 
-- Operational cost of errors and evaluation pitfalls are long-standing concerns [@sommer2010outside; @arp2022dos].
-- Benchmark datasets contain labelling and design flaws [@engelen2021troubleshooting; @flood2024smells].
-- Detectors degrade sharply across domains [@layeghy2023xcross].
-- 5G-specific datasets report near-perfect detection [@siriwardhana2025nidd; @khan2023slicesecure; @amponis2022pfcp], while adversarial evaluation of 5G-core detectors exposes fragility [@manca2026sage5gc].
+- Evaluation pitfalls and the operational cost of errors are well documented [@sommer2010outside; @arp2022dos].
+- Benchmark datasets contain design and labelling flaws [@engelen2021troubleshooting; @flood2024smells].
+- Detectors degrade across domains [@layeghy2023xcross].
+- 5G datasets report near-perfect detection [@siriwardhana2025nidd; @khan2023slicesecure; @amponis2022pfcp], whereas adversarial evaluation of 5G-core detectors shows fragility [@manca2026sage5gc].
 
-Our first simulator version reproduced the near-perfect-detection artefact; we discarded it for that reason (Section [8](#sec:limits)).
+**Calibrated detection.**
 
-**Calibrated intrusion detection.** Conformal p-values support exact FDR control for outlier detection [@bates2023outliers]. TRANSCENDENT uses conformal evaluation to reject drifting samples [@barbero2022transcendent]. FIRCE couples conformal evaluators with drift-triggered retraining [@barrett2026firce]. CALIBURN sets streaming alert thresholds by regime-dependent conformal risk control under a false-positive budget [@youssef2026caliburn]. An online conformal detector controls a smoothed false-discovery rate [@farzaneh2025ccoad]. All of these certify detector outputs. None certifies the service-level effect of the action taken on an alert, and none partitions the guarantee by slice. Our per-slice FPR baseline is the natural slice-stratified extension of these methods.
+- Conformal p-values give exact FDR control for outlier detection [@bates2023outliers].
+- TRANSCENDENT uses conformal evaluation to reject drifting samples [@barbero2022transcendent].
+- FIRCE couples conformal evaluators with retraining [@barrett2026firce].
+- CALIBURN sets streaming alert thresholds by regime-dependent conformal risk control [@youssef2026caliburn].
+- An online conformal detector controls a smoothed FDR [@farzaneh2025ccoad].
+
+These methods certify detector outputs. Our per-slice FPR baseline is their slice-stratified analogue.
 
 **Risk control.**
 
-- Conformal risk control bounds monotone losses [@angelopoulos2024crc].
+- Conformal risk control (CRC) bounds monotone losses [@angelopoulos2024crc].
 - LTT handles non-monotone and multiple risks by multiple testing [@angelopoulos2025ltt].
-- Weighted and online variants address shift [@tibshirani2019weighted; @barber2023beyond; @gibbs2021aci].
-- Conformal policy control regulates a new policy against a safe reference policy [@prinster2026cpc].
-- Prediction-powered risk control uses unlabelled data to reduce conservativeness [@einbinder2025ssrc].
+- Weighted and adaptive variants address shift [@tibshirani2019weighted; @barber2023beyond; @gibbs2021aci].
+- Conformal policy control regulates deviations from a safe policy [@prinster2026cpc].
+- Prediction-powered risk control reduces conservativeness using unlabelled data [@einbinder2025ssrc].
 
-RC-SIR uses LTT without modification. Its departure is in what is certified (counterfactual, slice-indexed SLA outcomes) and in the structural analysis of when certification of that quantity is worth its cost.
+**Response and mitigation.**
 
-**Intrusion response and mitigation.**
-
-- Hammar and Stadler derive threshold-structured optimal response policies via optimal stopping and stochastic games [@hammar2022optimalstopping; @hammar2024dynamic].
-- RRE selects responses in a partially observable game [@zonouz2014rre].
-- Switch-native systems mitigate volumetric DDoS at line rate [@liu2021jaqen].
-
-These works optimise response quality under a model; they do not provide distribution-free bounds on collateral harm. Our policies have the threshold structure these works motivate.
+- Optimal-stopping and game-theoretic methods derive threshold response policies under a model [@hammar2022optimalstopping; @hammar2024dynamic; @zonouz2014rre].
+- Switch-native systems mitigate volumetric attacks at line rate [@liu2021jaqen].
 
 **Slicing.**
 
 - RAN slicing with performance isolation [@foukas2017orion].
-- Overbooking [@salvat2018overbooking] and asymmetric SLA-cost forecasting [@bega2019deepcog] show that slices share and borrow capacity, which is the coupling our scheduler models.
-- Network digital twins [@ferriolgalmes2023routenetfermi] are candidate replay engines for the counterfactual evaluation that RC-SIR requires.
+- Overbooking [@salvat2018overbooking] and SLA-cost-aware forecasting [@bega2019deepcog] show that slices share and borrow capacity.
+- Network digital twins [@ferriolgalmes2023routenetfermi] are candidate replay engines.
 - Attacks on learned slicing controllers produce slice-dependent SLA violations [@tashman2026adversarial].
 
-Table [1](#tab:cmp) summarises the comparison.
+Table 1 summarises the differences.
 
 
 ```{=html}
-<div class="span" id="tab:comparison"><div class="tbl-num">Table 1<br/>Comparison with the closest approaches (qualitative columns from the cited papers' abstracts; "Measured here" from our experiments).</div><table style="width:100%;">
+<div class="span" id="tab:comparison"><div class="tbl-num">Table 1<br/>Comparison with the closest approaches. Qualitative columns are based on the cited papers' abstracts.</div><table>
 <colgroup>
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Approach</th>
-<th style="text-align: left;">What it provides</th>
-<th style="text-align: left;">Assumptions / limits</th>
-<th style="text-align: left;">Difference in this work</th>
-<th style="text-align: left;">Measured here</th>
-<th style="text-align: left;">Where it is better</th>
+<th style="text-align: left;">What it certifies or optimises</th>
+<th style="text-align: left;">Key assumption</th>
+<th style="text-align: left;">Difference from this work</th>
+<th style="text-align: left;">Compared here</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Conformal outlier / FPR control <span
-class="citation" data-cites="bates2023outliers youssef2026caliburn">[1,
-2]</span></td>
-<td style="text-align: left;">Finite-sample alert-level FPR/FDR or
-FP-budget control</td>
-<td style="text-align: left;">Exchangeability; certifies alerts, not
-action outcomes; not slice-indexed</td>
+<td style="text-align: left;">Conformal outlier / alert-threshold
+control <span class="citation"
+data-cites="bates2023outliers youssef2026caliburn">[1, 2]</span></td>
+<td style="text-align: left;">Alert-level FPR, FDR or false-positive
+budget</td>
+<td style="text-align: left;">Exchangeability</td>
 <td style="text-align: left;">Certifies slice-indexed SLA outcomes of
 actions</td>
-<td style="text-align: left;">1% FPR operating point: 0.775 attack
-delivered</td>
-<td style="text-align: left;">Needs no replay; simplest to deploy</td>
+<td style="text-align: left;">Exploratory: 1% FPR operating point</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Per-slice certified FPR (Corollary 1, our
-baseline)</td>
-<td style="text-align: left;">Collateral certificate via Lemma 1</td>
-<td style="text-align: left;">Requires monotone scheduler (A3)</td>
-<td style="text-align: left;">Direct certification exploits harm ratio
-&lt; 1</td>
-<td style="text-align: left;">0.458 attack delivered</td>
-<td style="text-align: left;">Small calibration sets, halved/doubled
-budgets, expensive replay</td>
+<td style="text-align: left;">Per-slice certified FPR (Corollary 1)</td>
+<td style="text-align: left;">Collateral, via Theorem 1</td>
+<td style="text-align: left;">Monotone scheduling and traffic-removing
+actions</td>
+<td style="text-align: left;">Direct certification does not need
+monotonicity</td>
+<td style="text-align: left;">Primary comparator (all studies)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">LTT / CRC <span class="citation"
 data-cites="angelopoulos2025ltt angelopoulos2024crc">[3, 4]</span></td>
-<td style="text-align: left;">Generic risk-control machinery</td>
+<td style="text-align: left;">Generic risks by multiple testing</td>
 <td style="text-align: left;">i.i.d. calibration</td>
 <td style="text-align: left;">Used unchanged; we add the counterfactual
-slice-collateral formulation and structural analysis</td>
-<td style="text-align: left;">Bonferroni variant: 0.498; fixed-sequence:
-0.417</td>
-<td style="text-align: left;">n/a</td>
+slice-collateral formulation and the structural analysis</td>
+<td style="text-align: left;">—</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Optimal-stopping / game-theoretic response
-<span class="citation"
-data-cites="hammar2022optimalstopping zonouz2014rre">[5, 6]</span></td>
-<td style="text-align: left;">Optimal threshold response under a
-model</td>
-<td style="text-align: left;">Attacker/system model; no
-distribution-free collateral bound</td>
-<td style="text-align: left;">Distribution-free per-slice collateral
-certificate</td>
-<td style="text-align: left;">Not reproduced (Section 8)</td>
-<td style="text-align: left;">Optimises response timing, which our
-episodic model does not</td>
+<td style="text-align: left;">Conformal policy control <span
+class="citation" data-cites="prinster2026cpc">[5]</span></td>
+<td style="text-align: left;">Risk of deviating from a safe policy</td>
+<td style="text-align: left;">Safe reference policy</td>
+<td style="text-align: left;">Network counterfactual, slice structure,
+relocating actions</td>
+<td style="text-align: left;">Not compared (different setting)</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Conformal policy control <span
-class="citation" data-cites="prinster2026cpc">[7]</span></td>
-<td style="text-align: left;">Risk-controlled deviation from a safe
-policy</td>
-<td style="text-align: left;">Generic; safe reference policy</td>
-<td style="text-align: left;">Network-specific counterfactual loss,
-slice structure</td>
-<td style="text-align: left;">Not compared (different setting)</td>
-<td style="text-align: left;">Online policy improvement</td>
+<td style="text-align: left;">Optimal-stopping / game-theoretic response
+<span class="citation"
+data-cites="hammar2022optimalstopping zonouz2014rre">[6, 7]</span></td>
+<td style="text-align: left;">Model-optimal response</td>
+<td style="text-align: left;">Attacker and system model</td>
+<td style="text-align: left;">No model; distribution-free per-slice
+certificate</td>
+<td style="text-align: left;">Not compared (different criterion)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Pooled certification (ablation)</td>
 <td style="text-align: left;">One certificate across slices</td>
-<td style="text-align: left;">Ignores slice heterogeneity</td>
+<td style="text-align: left;">—</td>
 <td style="text-align: left;">Per-slice budgets</td>
-<td style="text-align: left;">0.566 attack delivered</td>
-<td style="text-align: left;">None observed</td>
+<td style="text-align: left;">Exploratory, Study C</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Empirical constrained selection (ERM)</td>
+<td style="text-align: left;">No guarantee</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">Statistical margin</td>
+<td style="text-align: left;">All studies</td>
 </tr>
 </tbody>
 </table>
@@ -159,53 +158,63 @@ slice structure</td>
 ```
 
 
-# System Model and Problem Formulation {#sec:model}
+# System Model and Formulation {#sec:model}
 
-**User plane.** An egress link of capacity $C$ serves slices $s \in \mathcal{S}=\{\mathrm{eMBB},\mathrm{URLLC},\mathrm{mMTC}\}$. Slice $s$ is guaranteed $g_s C$ and may borrow idle capacity up to $C$, as in hierarchical token-bucket sharing. Each slice has a finite FIFO buffer; within a slice, drops and queueing delay are shared by its UEs. Time is slotted.
+**User plane.** An egress link of capacity $C$ serves slices $s\in\mathcal{S}$, each with a guaranteed rate $g_sC>0$ (with $\sum_s g_s\le1$), a leftover-sharing weight $w_s=g_s$ and a buffer $B_s$. In each slot the scheduler allocates
+$$x_s=\min\big(a_s,\;g_sC+w_s\theta\big),$$
+where $a_s$ is backlog plus arrivals and the water level $\theta$ is the largest value for which $\sum_s x_s\le C$. Overflow beyond $B_s$ is dropped. Drop fraction and queueing delay are shared by the UEs of a slice.
 
-**Episodes and detector.** An episode $e$ consists of an observation window of $T_o$ slots and an action window of $T_a$ slots. A detector maps the observation-window features of UE $u$ to a score $z_u \in [0,1]$. $\mathcal{B}_s(e)$ is the set of benign UEs of slice $s$ in episode $e$.
+**Episodes, detector and policies.**
 
-**Policies.** A policy $\pi_\lambda$ is parameterised by $\lambda=(\tau_s,a_s)_{s\in\mathcal{S}}$, a threshold and an action $a_s\in\{\mathsf{RL},\mathsf{B}\}$ (rate-limit to a slice-specific cap, or block). Every UE of slice $s$ with $z_u\ge\tau_s$ receives action $a_s$ for the whole action window; $\tau_s=\infty$ means no action. $\pi_0$ takes no action. With five thresholds and two actions per slice, $|\Lambda|=11^3=1331$.
+- An episode has an observation window ($T_o$ slots) and an action window ($T_a$ slots).
+- The detector maps observation-window features of UE $u$ to $z_u\in[0,1]$.
+- A policy $\pi_\lambda$ with $\lambda=(\tau_s,a_s)_{s\in\mathcal{S}}$ applies action $a_s$ to every UE of slice $s$ with $z_u\ge\tau_s$; $\pi_0$ takes no action.
+- Actions are rate-limiting ($\mathsf{RL}$), blocking ($\mathsf{B}$) and, in Study N, redirection ($\mathsf{R}$).
+- With five thresholds and two actions per slice, $|\Lambda|=1331$.
 
-**SLA outcomes.** $V_u(e;\pi)\in\{0,1\}$ indicates that benign UE $u$ violates its slice SLA during the action window under policy $\pi$:
+**SLA outcomes.** $V_u(e;\pi)\in\{0,1\}$ indicates that benign UE $u$ violates its slice SLA in the action window of episode $e$:
 
-- eMBB: delivered/offered ratio below 0.90;
-- URLLC: 95th-percentile queueing delay above 2 slots, or delivery below 0.99;
+- eMBB: delivered/offered below 0.90;
+- URLLC: 95th-percentile delay above 2 slots, or delivery below 0.99;
 - mMTC: delivery below 0.95.
 
-**Definition 1 (action-induced collateral).** For slice $s$ and policy $\pi_\lambda$,
-$$L^{c}_s(e;\lambda)=\frac{1}{|\mathcal{B}_s(e)|}\sum_{u\in\mathcal{B}_s(e)}\mathbb{1}\{V_u(e;\pi_\lambda)=1,\;V_u(e;\pi_0)=0\},\qquad R^{c}_s(\lambda)=\mathbb{E}_e[L^{c}_s(e;\lambda)].$$
-The counterfactual $\pi_0$ separates harm caused by mitigation from harm caused by the attack itself.
+**Definition 1 (action-induced collateral).**
+$$L^{c}_s(e;\lambda)=\frac{1}{|\mathcal{B}_s(e)|}\sum_{u\in\mathcal{B}_s(e)}\mathbb{1}\{V_u(e;\pi_\lambda)=1,\;V_u(e;\pi_0)=0\},\qquad R^c_s(\lambda)=\mathbb{E}_e[L^c_s(e;\lambda)].$$
 
-**Objective.** Let $L^{a}(e;\lambda)\in[0,1]$ be the fraction of attack traffic delivered under $\pi_\lambda$ in an episode containing attackers, and $R^a(\lambda)$ its expectation. The operator seeks
-$$\min_{\lambda\in\Lambda} R^{a}(\lambda)\quad\text{s.t.}\quad R^{c}_s(\lambda)\le\alpha_s\;\;\forall s\in\mathcal{S},$$
-and requires the selected $\hat{\lambda}$ to satisfy all constraints with probability at least $1-\delta$ over the calibration data.
+**Problem.** Let $R^a(\lambda)$ be the expected fraction of attack traffic delivered in episodes that contain attackers. The goal is
+$$\min_{\lambda}R^a(\lambda)\;\;\text{s.t.}\;\;R^c_s(\lambda)\le\alpha_s\;\forall s,$$
+with the selected $\hat{\lambda}$ satisfying all constraints with probability at least $1-\delta$ over the calibration data.
 
 **Assumptions.**
 
-- **A1:** calibration and deployment episodes are i.i.d. draws from the same distribution.
-- **A2:** $L^c_s(e;\lambda)$ can be evaluated for every $\lambda$ on a calibration episode by replaying its traffic, either in a replay engine or in a twin whose error is bounded as in Proposition 2.
-- **A3 (monotone scheduling):** if the offered traffic of a set of UEs is reduced pointwise in time, no other UE's delivered fraction decreases and no other UE's queueing delay increases.
+- **A1:** calibration and deployment episodes are i.i.d.
+- **A2:** $L^c_s(e;\lambda)$ can be evaluated for every $\lambda$ by replaying calibration episodes.
 
-A3 holds for work-conserving fair schedulers with per-UE policing applied before queueing. It can fail with congestion-control feedback or non-work-conserving shapers. For our simulator we verify it numerically rather than analytically (Section [6](#sec:results)).
+**Theorem 1 (monotonicity of the scheduler).** Suppose every action only reduces the traffic of the acted UE pointwise in time (as $\mathsf{RL}$ and $\mathsf{B}$ do). Then, for every benign UE that is not acted on, the per-slot drop fraction and queueing delay of its slice do not increase. Hence $V_u(e;\pi_\lambda)\le V_u(e;\pi_0)$.
 
-**Lemma 1.** Under A3, for every episode $e$, policy $\lambda$ and slice $s$,
-$$L^{c}_s(e;\lambda)\le F_s(e;\tau_s):=\frac{1}{|\mathcal{B}_s(e)|}\sum_{u\in\mathcal{B}_s(e)}\mathbb{1}\{z_u\ge\tau_s\}.$$
+The proof is in Appendix [A](#app:proof). It uses the closed form of the allocation, a queue-comparison induction, and the inequality $(O-\Delta)/(A-\Delta)\le O/A$ for overflow $O\le A$.
 
-*Proof.* Let $u\in\mathcal{B}_s(e)$ with $z_u<\tau_s$, so $u$ is not acted on. Under $\pi_\lambda$ the offered traffic of every other UE is pointwise no larger than under $\pi_0$, and $u$'s own traffic is unchanged. By A3, $u$'s delivered fraction is no smaller and its delay no larger under $\pi_\lambda$. Hence $V_u(e;\pi_\lambda)\le V_u(e;\pi_0)$, and $u$ contributes zero to $L^c_s$. Only acted UEs can contribute, each at most $1/|\mathcal{B}_s(e)|$. ∎
+**Lemma 1.** Under the conditions of Theorem 1,
+$$L^c_s(e;\lambda)\le F_s(e;\tau_s)=\frac{1}{|\mathcal{B}_s(e)|}\sum_{u\in\mathcal{B}_s(e)}\mathbb{1}\{z_u\ge\tau_s\}.$$
 
-**Remark 1 (where a gain can come from).** Write $R^{c}_s(\lambda)=\rho_s(\lambda)\,\Phi_s(\tau_s)$, with $\Phi_s(\tau)=\mathbb{E}[F_s(e;\tau)]$ and harm ratio $\rho_s\in[0,1]$. A per-slice FPR certificate admits only thresholds with $\Phi_s(\tau_s)\le\alpha_s$. Direct certification admits $\Phi_s(\tau_s)\le\alpha_s/\rho_s$. Direct certification can therefore select more aggressive thresholds only when $\rho_s$ is substantially below one *and* the threshold grid contains points in the band $(\alpha_s,\alpha_s/\rho_s]$, after allowing for the statistical margin of each test. The remark is an identity, but it predicts where the gain should and should not appear, and we test that prediction.
+*Proof.* By Theorem 1, non-acted benign UEs contribute zero, and each acted UE contributes at most $1/|\mathcal{B}_s(e)|$. ∎
+
+**Remark 1.** Write $R^c_s=\rho_s\Phi_s$, with $\Phi_s(\tau)=\mathbb{E}[F_s(e;\tau)]$ and harm ratio $\rho_s\in[0,1]$. A per-slice FPR certificate requires $\Phi_s\le\alpha_s$; direct certification requires only $\rho_s\Phi_s\le\alpha_s$. A gain is possible only where $\rho_s<1$ and the threshold grid, after statistical margins, contains points between the two conditions.
+
+**Proposition 0 (relocation breaks Lemma 1).** If an action relocates traffic onto shared resources rather than removing it, $F_s$ need not bound $L^c_s$, even for slices in which no UE is acted on.
+
+*Proof (by construction).* Take two eMBB UEs offering 30 and 26 units/slot and a URLLC UE offering 40 units/slot on a link with $C=100$ and shares $(0.55,0.25,0.20)$. Without action, all SLAs hold. Redirecting the first eMBB UE to a borrow-only scrubbing class whose benign output re-enters eMBB one slot later raises the offered load to 126. The URLLC UE, which is not acted on and lies in another slice, then violates its SLA. Its slice has $F_{\mathrm{URLLC}}=0$ but $L^c_{\mathrm{URLLC}}=1$. This case is a unit test in the released code. ∎
 
 # Certification Procedure {#sec:method}
 
-For each calibration episode $e_i$, $i=1,\dots,n$, the replay engine evaluates $L^c_s(e_i;\lambda)$ and $L^a(e_i;\lambda)$ for all $\lambda\in\Lambda$. Let $\hat{R}_s(\lambda)$ be the empirical mean of $L^c_s$ over the calibration episodes. For each $\lambda$ we test the union null $H_\lambda:\exists s,\;R^c_s(\lambda)>\alpha_s$ with the p-value
-$$p_\lambda=\max_{s\in\mathcal{S}} p^{\mathrm{HB}}\big(\hat{R}_s(\lambda);\alpha_s,n\big),$$
-where $p^{\mathrm{HB}}$ is the Hoeffding–Bentkus p-value for $[0,1]$-bounded losses used in LTT [@angelopoulos2025ltt]. The certified set $\hat{\Lambda}$ is obtained with family-wise error rate (FWER) control at level $\delta$, in one of two variants:
+For calibration episodes $e_1,\dots,e_n$, replay yields $L^c_s(e_i;\lambda)$ and $L^a(e_i;\lambda)$ for all $\lambda$. Let $\hat{R}_s(\lambda)$ be the empirical mean collateral. Each $\lambda$ is tested against the union null $H_\lambda:\exists s,\,R^c_s(\lambda)>\alpha_s$ with
+$$p_\lambda=\max_s p^{\mathrm{HB}}(\hat{R}_s(\lambda);\alpha_s,n),$$
+where $p^{\mathrm{HB}}$ is the Hoeffding–Bentkus p-value for $[0,1]$-bounded losses [@angelopoulos2025ltt]. Family-wise error is controlled at $\delta$ in one of two ways:
 
-- **Bonferroni (RC-SIR):** $\hat{\Lambda}=\{\lambda: p_\lambda\le\delta/|\Lambda|\}$.
-- **Fixed sequence (RC-SIR-FS):** the calibration set is split in half. The first half orders policies by $\max_s \hat{R}_s(\lambda)/\alpha_s$, ties broken by empirical attack delivery. The second half tests $H_\lambda$ in that order at level $\delta$, stopping at the first non-rejection.
+- **Bonferroni (RC-SIR):** threshold $\delta/|\Lambda|$.
+- **Fixed sequence (RC-SIR-FS):** policies are ordered on half of the calibration set by $\max_s\hat{R}_s/\alpha_s$ and tested in that order on the other half, stopping at the first non-rejection.
 
-The deployed policy is $\hat{\lambda}=\arg\min_{\lambda\in\hat{\Lambda}}\hat{R}^a(\lambda)$, computed on the full calibration set, with $\pi_0$ as the fallback when $\hat{\Lambda}=\emptyset$. Algorithm 1 summarises the procedure.
+The deployed policy minimises empirical $\hat{R}^a$ over the certified set, with $10^{-3}J$ as a tie-breaker, where $J$ is the weighted benign-violation rate. The fallback is $\pi_0$. Algorithm 1 gives the steps.
 
 
 <div class="algo"><b>Algorithm 1.</b> RC-SIR / RC-SIR-FS certification and selection<br/>
@@ -216,91 +225,81 @@ The deployed policy is $\hat{\lambda}=\arg\min_{\lambda\in\hat{\Lambda}}\hat{R}^
 3. Return argmin<sub>λ∈Λ̂</sub> R̂<sup>a</sup>(λ), or π<sub>0</sub> if Λ̂ is empty.</div>
 
 
-**Proposition 1 (validity).** Under A1–A2, both variants satisfy $\Pr\{\forall s:\ R^c_s(\hat{\lambda})\le\alpha_s\}\ge1-\delta$.
+**Proposition 1 (validity).** Under A1–A2, both variants satisfy $\Pr\{\forall s:R^c_s(\hat{\lambda})\le\alpha_s\}\ge1-\delta$. No monotonicity is required.
 
-*Proof.*
+*Proof.* $p_\lambda$ is valid for $H_\lambda$, because it dominates the valid p-value of a violating slice. Bonferroni, and fixed-sequence testing with an ordering independent of the testing half, control the family-wise error. On the complement of a family-wise error, every certified policy is feasible, so selection among them preserves the guarantee. $\pi_0$ has zero collateral. ∎
 
-1. Under $H_\lambda$ there is a slice $s^\ast$ with $R^c_{s^\ast}(\lambda)>\alpha_{s^\ast}$. Since $p_\lambda\ge p^{\mathrm{HB}}_{s^\ast}$ and $p^{\mathrm{HB}}$ is super-uniform under that null, $p_\lambda$ is a valid p-value for $H_\lambda$.
-2. Bonferroni controls the FWER at $\delta$. Fixed-sequence testing does too, because the ordering is a function of the first half only, and the second half is independent of it under A1.
-3. On the complement of a family-wise error, every $\lambda\in\hat{\Lambda}$ satisfies all constraints, so any selection rule over $\hat{\Lambda}$, including one that uses all calibration data, inherits the guarantee.
-4. The fallback $\pi_0$ has $R^c_s=0$. ∎
+This is a direct consequence of LTT.
 
-The result is a direct consequence of LTT [@angelopoulos2025ltt]; we state it to make the union-null construction and the selection step explicit.
+**Corollary 1 (Slice-FPR certificate).** Testing $\Phi_s(\tau)\le\alpha_s$ from the most conservative threshold downwards at level $\delta/|\mathcal{S}|$ per slice certifies the per-slice FPR. Under Theorem 1 it certifies collateral. Under relocating actions it does not (Proposition 0).
 
-**Corollary 1 (per-slice FPR baseline).** Certify for each slice the smallest threshold with $\Phi_s(\tau_s)\le\alpha_s$, testing thresholds from the most conservative downwards (valid fixed-sequence testing because $F_s$ is monotone in $\tau$) at level $\delta/|\mathcal{S}|$, and block above it. By Lemma 1 this also satisfies the collateral constraints with probability at least $1-\delta$. It requires no replay, only benign scores.
+**Implementation verification.**
 
-**Proposition 2 (calibration on a twin).** Suppose calibration uses twin losses $\tilde{L}^c_s$, and on an event $E$ with $\Pr(E)\ge1-\eta$, $|\tilde{R}^c_s(\lambda)-R^c_s(\lambda)|\le\varepsilon_s$ for all $\lambda,s$. Certifying the twin at budgets $\alpha_s-\varepsilon_s$ yields $\Pr\{\forall s: R^c_s(\hat{\lambda})\le\alpha_s\}\ge1-\delta-\eta$.
+- **Known-risk Monte Carlo.** The certified variants were tested on synthetic loss tables with known risks and an adversarial selection objective that rewards risky policies. Over 1500 calibration draws, the selected policy violated a budget in 0.07% of draws for both variants ($\delta=10\%$). Uncertified constrained selection did so in 100% of draws.
+- **Consistency.** A standalone reimplementation reproduces all published exploratory numbers exactly.
 
-*Proof.* On $E$ intersected with the twin certification event, $R^c_s(\hat{\lambda})\le\tilde{R}^c_s(\hat{\lambda})+\varepsilon_s\le\alpha_s$. A union bound completes the proof. ∎
+**Complexity.** Certification costs $O(n|\Lambda||\mathcal{S}|)$ operations. Replay dominates: $|\Lambda|$ policy evaluations per calibration episode.
 
-To estimate $\varepsilon_s$ we use $m$ paired twin/real episodes: $\hat{\varepsilon}_s=\max_\lambda m^{-1}\sum_j|\tilde{L}^c_s-L^c_s|+\sqrt{\log(3|\Lambda|/\eta)/(2m)}$. This is valid by Hoeffding's inequality with a union bound, because $|\tilde{R}-R|\le\mathbb{E}|\tilde{L}-L|$.
-
-**Complexity.** Calibration costs $O(n|\Lambda||\mathcal{S}|)$ operations for the risk means plus $O(|\Lambda|)$ p-values. The dominant cost is replay: $|\Lambda|$ policy evaluations per calibration episode, each $O(UT_a)$ for $U$ UEs.
-
-# Experimental Setup {#sec:setup}
+# Experimental Design {#sec:setup}
 
 **Simulator.**
 
-- Capacity $C=100$ units/slot, guaranteed shares $(0.55,0.25,0.20)$, buffers $(200,12,60)$ units.
-- 14, 10 and 16 benign UEs per slice; $T_o=30$, $T_a=120$ slots.
-- With probability 0.6, an episode contains 1–4 attackers, placed in eMBB, URLLC and mMTC with probabilities $(0.45,0.15,0.40)$.
-- Attack types: constant floods, pulsing floods, and (in deployment only) low-and-slow sources.
-- Rate-limit caps are $(3.0,1.0,0.5)$ units/slot.
+- Three slices, $C=100$ units/slot, shares $(0.55,0.25,0.20)$, buffers $(200,12,60)$, and 14/10/16 benign UEs per slice in the base scenario.
+- Observation and action windows of 30 and 120 slots.
+- Up to four attackers per episode: floods, pulsing floods and low-and-slow sources.
+- Rate-limit caps $(3,1,0.5)$ units/slot.
 
-All parameters are listed in `code/sim.py` and recorded in `results/results.json`.
+**Detector shift.** The detector is trained on a *benchmark* regime and deployed in an *operational* regime with:
 
-**Training versus deployment regime.** The detector is trained on a *benchmark* regime. Deployment episodes come from an *operational* regime that adds:
+- additional benign behaviours (variable heavy users, URLLC alarm bursts, mMTC firmware bursts);
+- attackers that mimic their slice's packet size in 70% of cases;
+- an unseen low-and-slow class.
 
-- more variable heavy eMBB users,
-- URLLC alarm bursts and mMTC firmware-update bursts,
-- attackers that mimic their slice's packet size in 70% of cases,
-- an unseen low-and-slow attack class.
+This models cross-domain degradation [@layeghy2023xcross]. The detector is an Isolation Forest [@liu2008iforest] trained on benign benchmark-regime UEs; its score is the benign-training quantile. Thresholds are $\{0.9,0.95,0.99,0.995,0.999\}$. Implementation uses scikit-learn [@pedregosa2011sklearn].
 
-This models the cross-domain degradation documented for real detectors [@layeghy2023xcross].
+**Fixed settings.** $\alpha=(0.05,0.02,0.05)$, $\delta=0.1$, $n=500$ calibration episodes.
 
-**Detectors.** The primary detector is an Isolation Forest [@liu2008iforest] trained on benign benchmark-regime UEs. Its score is the empirical quantile of benign training scores, so thresholds are $\{0.9,0.95,0.99,0.995,0.999\}$. A gradient-boosting classifier trained on labelled benchmark-regime UEs is a secondary check. Both use scikit-learn [@pedregosa2011sklearn]. Each detector has seven per-UE features computed on the observation window only (mean, standard deviation, maximum, activity fraction, peak-to-mean ratio, mean absolute increment, mean packet size) plus slice indicators. Deployment pool AUCs were 0.892 (Isolation Forest) and 0.826 (gradient boosting).
+**Exploratory study (v1).**
 
-**Data.** Seeds derive from one master seed (20261102) through independent `SeedSequence` streams:
+- One pool of 1500 episodes, 200 calibration/test splits.
+- Sweeps over $n$ and budget scale.
+- Load-shift and twin experiments.
+- A second (supervised) detector.
 
-- 600 training episodes (benchmark regime);
-- a pool of 1500 deployment episodes (62.6% containing attacks);
-- 400 high-load deployment episodes (load factor in $[1.1,1.35]$ instead of $[0.6,1.1]$).
+During this study we made two design changes, both disclosed in Appendix [B](#app:deviations): we replaced a first simulator version, and we corrected the selection objective. We also chose the fixed-sequence variant after seeing results.
 
-Every pool episode is replayed under all 1331 policies, $\pi_0$ and the oracle (which blocks exactly the attackers), for both detectors and for a twin that overestimates capacity by 8%.
+**Confirmatory studies.** Their analysis plan was committed to the repository before any confirmatory data existed, and was not modified.
 
-**Protocol.**
+**Study C** (eight independent replications, new seeds):
 
-- Budgets $\alpha=(0.05,0.02,0.05)$, $\delta=0.1$.
-- Selection objective: mean delivered attack fraction over calibration episodes that contain attackers, plus $10^{-3}J$ as a tie-breaker, where $J=\sum_s w_s\,\overline{V}_s$ is the weighted benign SLA-violation rate with $w=(0.3,0.5,0.2)$.
-- 200 random splits of the pool into $n=500$ calibration and 1000 test episodes.
-- These settings and the objective were fixed before results were computed (Section [8](#sec:limits) records one implementation deviation and its correction).
-- A split counts as a *violation* if any slice's realised test collateral exceeds its budget. Certified methods should violate in at most a fraction $\delta$ of splits.
+- Each replication draws its scenario: UE counts ×U(0.75,1.25), attack probability U(0.4,0.8), perturbed shares and buffers, load range, and attack-slice probabilities.
+- Each trains a new detector on 600 episodes and generates 1500 deployment episodes, analysed over 50 splits.
+- **Primary endpoint:** the mean paired difference in delivered attack fraction (RC-SIR-FS minus Slice-FPR), with inference across replications by a t-interval and an exact sign test.
+- **Pre-registered decision rule:** the improvement claim is supported only if the 95% upper bound is below zero *and* at least 7 of 8 replications favour RC-SIR-FS.
+- **Validity:** violation frequency with Clopper–Pearson intervals, plus "confident violations" whose one-sided 95% Hoeffding lower bound on the test risk exceeds the budget. The latter separates calibration failures from test-set sampling error.
 
-**Baselines.** All baselines select among the same 1331 policies and the same replayed outcomes:
+**Study N** (non-monotone actions):
 
-- **Slice-FPR:** Corollary 1, the strongest alert-level competitor.
-- **Pooled LTT:** one shared $(\tau,a)$ certified on benign-averaged collateral.
-- **Conformal FPR 1%:** a single threshold with conformal benign FPR at most 1%, then block. This is the operating point of alert-level calibrated detectors.
-- **Fixed threshold:** block above the 99th benign-training percentile.
-- **ERM:** minimise empirical $\hat{R}^a$ subject to $\hat{R}_s\le\alpha_s$, without a statistical margin.
-- **No action and Oracle:** reference points.
+- Actions are block or redirect, in the base scenario with a new seed.
+- Redirection sends traffic through a borrow-only scrubbing class (weight 0.20) that removes attack traffic. Benign traffic returns to its slice one slot later.
+- Hypotheses:
+  - N-H1: Lemma 1 fails empirically;
+  - N-H2: Slice-FPR with redirect violates its budgets in more than $\delta$ of splits;
+  - N-H3: RC-SIR-FS remains valid.
 
-A model-based optimal-stopping response [@hammar2022optimalstopping] is not reproduced; Section [8](#sec:limits) explains why.
+**Baselines.** All are evaluated on identical replayed outcomes:
+
+- **Slice-FPR:** Corollary 1, the strongest certified alternative.
+- **Pooled LTT:** one shared $(\tau,a)$.
+- **ERM:** empirical constrained selection without a margin.
+- **Conformal FPR 1%** and a **fixed threshold:** alert-level operating points (exploratory study only).
+- **No action** and the **Oracle** (which blocks exactly the attackers).
+
+Model-based response policies [@hammar2022optimalstopping] optimise a different criterion and are outside the scope of the comparison.
 
 # Results {#sec:results}
 
-**Assumption checks.**
-
-- **A3.** Over all $1500\times1331\times3$ episode–policy–slice combinations, collateral never exceeded the acted-benign fraction by more than 2.6e-08, which is float32 rounding.
-- **Unit tests.** A randomised test over 1000 arbitrary per-UE action patterns found no non-acted UE whose SLA status worsened.
-- **Harm ratio.** Pooled over acted policies it was 0.72, but it varies strongly with slice and action (Table [4](#tab:harm)):
-    - about 0.54 for eMBB at threshold 0.99;
-    - about 0.95 for URLLC;
-    - 0.11 for rate-limiting in mMTC, against 0.99 for blocking there.
-
-  By Remark 1, direct certification can gain mainly in eMBB.
-
-**Validity and the main comparison.** Table [2](#tab:main) reports the main comparison. No certified method exceeded its budgets in any of the 200 splits. ERM, which enforces the budgets only empirically, violated them in 10.0% of splits at $n=500$. As $n$ decreases this rises to 15.5% at $n=250$ and 25.5% at $n=100$ (Fig. [2](#fig:ncal)). At $n=500$ the ERM violation frequency equals the nominal $\delta$, so at that calibration size the empirical rule is not worse than the target level; the certificate matters at smaller $n$. The realised collateral of the certified methods stayed well below the budgets (for example 0.018 against 0.05 in eMBB), which shows that the certificates are conservative. Fig. [1](#fig:collateral) shows the distribution of realised collateral.
+## Exploratory study
 
 
 ```{=html}
@@ -424,17 +423,13 @@ A model-based optimal-stopping response [@hammar2022optimalstopping] is not repr
 ```
 
 
-
-<figure id="fig:fig_collateral"><img src="/home/user/archieRanjan/research/paper/figs/fig_collateral.png"/><figcaption><b>Fig. 1.</b> Realised test collateral per slice over 200 splits (log-linear axis); dashed lines are the budgets.</figcaption></figure>
-
-
-**Direct versus FPR certification.** With fixed-sequence testing, RC-SIR-FS delivered 0.417 of attack traffic, against 0.458 for Slice-FPR. Paired over identical splits (Table [3](#tab:paired)), the mean difference was -0.043, and RC-SIR-FS was better in 93.5% of splits. The 97.5% quantile of the difference was +0.041: in a minority of splits the half-sample split costs more than the harm-ratio gain.
-
-The modal RC-SIR-FS policy blocked at threshold 0.99 in eMBB, where Slice-FPR certified only 0.995. At 0.99 the eMBB acted-benign fraction is 0.035. That is below the 0.05 budget, but too close to it for the Hoeffding–Bentkus test to certify at level $\delta/3$ with 500 episodes. The collateral at the same threshold, 0.019, leaves enough margin. The gain is thus the statistical-margin component of Remark 1, not the deterministic band.
-
-With Bonferroni control, RC-SIR was *worse* than Slice-FPR in every split (mean difference +0.040). Correcting over 1331 hypotheses costs more margin than the harm ratio returns.
-
-Against pooled certification and the alert-level operating points, direct certification delivered less attack traffic (0.566 for Pooled LTT, 0.775 for 1% conformal FPR).
+- **Validity.** No certified method exceeded its budgets in 200 splits. ERM violated them in 10.0% of splits at $n=500$ (equal to $\delta$) and in 25.5% at $n=100$ (Fig. 1).
+- **Direct vs FPR certification.** RC-SIR-FS delivered 0.417 of attack traffic, against 0.458 for Slice-FPR; it was better in 93.5% of paired splits (Table 3).
+- **Bonferroni variant.** It was worse than Slice-FPR in every split.
+- **Where the advantage vanishes.** It disappeared at $n\le250$ and at budgets scaled by 0.5 or 2.
+- **Action set.** Rate-limiting added nothing over block-only policies (0.417 vs 0.418).
+- **Harm ratios.** Measured over single-slice policies, they were about 0.54 in eMBB, 0.95 in URLLC and 0.99 for blocking in mMTC. Consistent with Remark 1, the gain came from eMBB.
+- **Twin calibration.** Calibrating on a twin with an 8% capacity error produced no violations without correction. The rigorous twin-error correction (a union-bound Hoeffding term of about 0.14 at 300 paired episodes) exceeded every budget, so twin-based certification with a guarantee was not practical here.
 
 
 ```{=html}
@@ -513,288 +508,174 @@ splits</th>
 ```
 
 
-**When the advantage disappears.**
 
-- **Small calibration sets.** At $n\le250$ RC-SIR-FS often fell back to no action, or certified less than Slice-FPR, which needs no replay and tests only five monotone thresholds per slice (Fig. [2](#fig:ncal)). At $n=250$ the delivered attack fractions were 0.539 versus 0.490; at $n=1000$, 0.413 versus 0.453.
-- **Other budgets.** Halving the budgets gave 0.520 versus 0.526; doubling them gave 0.391 versus 0.392. Both are effectively ties, because no grid threshold falls in the band of Remark 1.
-- **Action space.** Restricting RC-SIR-FS to block-only policies changed the delivered attack fraction from 0.417 to 0.418. Rate-limiting is harmless in mMTC, but at the selected thresholds it also lets more attack traffic through, so it is rarely chosen.
-- **Saturated detector.** With the gradient-boosting detector, whose scores are saturated (no benign UE scored above 0.5), every method selected the same policy (0.532 delivered).
+<figure id="fig:fig_ncal"><img src="/home/user/archieRanjan/research/paper/figs/fig_ncal.png"/><figcaption><b>Fig. 1.</b> Exploratory study. Left: budget-violation frequency versus calibration size (dashed: $\delta$). Right: delivered attack fraction.</figcaption></figure>
 
 
-<figure id="fig:fig_ncal"><img src="/home/user/archieRanjan/research/paper/figs/fig_ncal.png"/><figcaption><b>Fig. 2.</b> Left: budget-violation frequency versus calibration size (dashed line: $\delta$). Right: delivered attack fraction versus calibration size.</figcaption></figure>
+## Confirmatory Study C (independent replications)
 
+**Validity.** Pooled over 400 splits, RC-SIR-FS, RC-SIR, Slice-FPR and Pooled LTT never exceeded a budget (95% Clopper–Pearson upper bound 0.009). ERM exceeded one in 0.003 of splits. No violation of any method was "confident", i.e. distinguishable from test-set sampling error.
 
-**Load shift.** Calibrating on nominal-load episodes and testing on high-load episodes produced no violations for RC-SIR-FS (0.000), because collateral in this model is driven by acting on benign UEs, which load changes little. Recalibrating on only 200 shifted episodes left too few samples to certify any policy (fallback rate 1.00). We do not claim robustness to shifts that change benign score distributions.
+**Primary endpoint (not confirmed).** The mean paired difference in delivered attack fraction, RC-SIR-FS minus Slice-FPR, was -0.030, with 95% t-interval [-0.071, +0.011]. 6 of 8 replications favoured RC-SIR-FS (exact sign test $p=0.29$). The pre-registered criterion (upper bound below zero and at least 7 of 8 replications) was not met.
 
-**Twin calibration.** Calibrating on a twin with 8% optimistic capacity, without correction, produced no violations (0.000). The largest per-slice mean twin/real gap was 0.025 (eMBB). The rigorous correction of Proposition 2 with $m=300$ paired episodes subtracts a Hoeffding term of about 0.14, larger than every budget, so the certified set was always empty (fallback rate 1.00). A plug-in correction without the concentration term retained most of the utility (0.489 delivered) but is not covered by Proposition 2. A practical twin-transfer certificate needs a tighter, policy-specific bound.
+The effect was heterogeneous (Table 4):
 
-**Cost.**
+- one replication showed a large gain (-0.144);
+- four showed small gains;
+- two were slightly negative.
 
-- Selection and certification on 500 episodes took 4.6 ms (median).
-- Replay dominates: 7,064,900 policy–episode evaluations took 864 s on 4 vCPUs, i.e. 0.122 ms each in this fluid model.
-- A packet-level twin or a testbed would be orders of magnitude slower per evaluation. This favours Slice-FPR whenever replay is expensive.
+**Secondary endpoints.**
+
+- The Bonferroni variant was worse than Slice-FPR: +0.051, interval [+0.009, +0.092].
+- Uncertified ERM delivered less attack traffic than RC-SIR-FS: RC-SIR-FS minus ERM was +0.052, interval [+0.011, +0.093]. That is the price of the certificate in scenarios where the budgets are slack.
+
+**Heterogeneity (post hoc, exploratory).** We counted the eMBB, URLLC and mMTC thresholds in each replication's population at which the FPR test needs more margin than the collateral test. These are thresholds where the acted fraction exceeds $\alpha_s/2$ while collateral stays below $\alpha_s/2$, or where the acted fraction exceeds $\alpha_s$ while collateral stays below it. The count correlated with the gain (Spearman $\rho=-0.85$, eight replications). The three replications without such thresholds showed no gain. This agrees with Remark 1 but was not pre-registered.
 
 
 ```{=html}
-<div class="span" id="tab:harm_ratio"><div class="tbl-num">Table 4<br/>Measured harm ratio (Proposition 2) for single-slice policies over all 1500 pool episodes.</div><table style="width:100%;">
+<div class="span" id="tab:confirm_C_reps"><div class="tbl-num">Table 4<br/>Study C, eight independent replications (50 splits each, n_cal = 500). Viol. = fraction of splits in which any slice's test collateral exceeded its budget.</div><table>
 <colgroup>
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">Slice</th>
-<th style="text-align: right;">Threshold</th>
-<th style="text-align: left;">Action</th>
-<th style="text-align: right;">Acted benign fraction</th>
-<th style="text-align: right;">Collateral</th>
-<th style="text-align: right;">Harm ratio rho</th>
+<th style="text-align: right;">Rep</th>
+<th style="text-align: right;">Seed</th>
+<th style="text-align: right;">AUC</th>
+<th style="text-align: left;">UEs (eMBB/URLLC/mMTC)</th>
+<th style="text-align: right;">p_attack</th>
+<th style="text-align: right;">Viol. FS</th>
+<th style="text-align: right;">Viol. Slice-FPR</th>
+<th style="text-align: right;">Viol. ERM</th>
+<th style="text-align: right;">Attack del. FS</th>
+<th style="text-align: right;">Attack del. Slice-FPR</th>
+<th style="text-align: right;">Mean diff (FS−FPR)</th>
+<th style="text-align: right;">Splits FS better</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.9</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.2141</td>
-<td style="text-align: right;">0.1373</td>
-<td style="text-align: right;">0.641</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3001</td>
+<td style="text-align: right;">0.887</td>
+<td style="text-align: left;">14/12/13</td>
+<td style="text-align: right;">0.52</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.412</td>
+<td style="text-align: right;">0.417</td>
+<td style="text-align: right;">-0.005</td>
+<td style="text-align: right;">0.10</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.9</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.2141</td>
-<td style="text-align: right;">0.1462</td>
-<td style="text-align: right;">0.683</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3002</td>
+<td style="text-align: right;">0.922</td>
+<td style="text-align: left;">15/12/15</td>
+<td style="text-align: right;">0.62</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.363</td>
+<td style="text-align: right;">0.394</td>
+<td style="text-align: right;">-0.031</td>
+<td style="text-align: right;">0.98</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.95</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.1336</td>
-<td style="text-align: right;">0.0829</td>
-<td style="text-align: right;">0.621</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3003</td>
+<td style="text-align: right;">0.915</td>
+<td style="text-align: left;">14/10/15</td>
+<td style="text-align: right;">0.78</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.301</td>
+<td style="text-align: right;">0.330</td>
+<td style="text-align: right;">-0.028</td>
+<td style="text-align: right;">1.00</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.95</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.1336</td>
-<td style="text-align: right;">0.0868</td>
-<td style="text-align: right;">0.650</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3004</td>
+<td style="text-align: right;">0.878</td>
+<td style="text-align: left;">11/8/19</td>
+<td style="text-align: right;">0.53</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">0.633</td>
+<td style="text-align: right;">0.642</td>
+<td style="text-align: right;">-0.009</td>
+<td style="text-align: right;">0.92</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.99</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0352</td>
-<td style="text-align: right;">0.0190</td>
-<td style="text-align: right;">0.541</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3005</td>
+<td style="text-align: right;">0.862</td>
+<td style="text-align: left;">12/9/20</td>
+<td style="text-align: right;">0.63</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.679</td>
+<td style="text-align: right;">0.670</td>
+<td style="text-align: right;">+0.008</td>
+<td style="text-align: right;">0.04</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.99</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0352</td>
-<td style="text-align: right;">0.0191</td>
-<td style="text-align: right;">0.544</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">3006</td>
+<td style="text-align: right;">0.878</td>
+<td style="text-align: left;">15/11/12</td>
+<td style="text-align: right;">0.43</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.484</td>
+<td style="text-align: right;">0.629</td>
+<td style="text-align: right;">-0.144</td>
+<td style="text-align: right;">1.00</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.995</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0132</td>
-<td style="text-align: right;">0.0061</td>
-<td style="text-align: right;">0.460</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">3007</td>
+<td style="text-align: right;">0.885</td>
+<td style="text-align: left;">14/9/16</td>
+<td style="text-align: right;">0.70</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.424</td>
+<td style="text-align: right;">0.455</td>
+<td style="text-align: right;">-0.031</td>
+<td style="text-align: right;">0.96</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.995</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0132</td>
-<td style="text-align: right;">0.0061</td>
-<td style="text-align: right;">0.460</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.999</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0021</td>
-<td style="text-align: right;">0.0009</td>
-<td style="text-align: right;">0.400</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">eMBB</td>
-<td style="text-align: right;">0.999</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0021</td>
-<td style="text-align: right;">0.0009</td>
-<td style="text-align: right;">0.400</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.9</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.1009</td>
-<td style="text-align: right;">0.0968</td>
-<td style="text-align: right;">0.960</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.9</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.1009</td>
-<td style="text-align: right;">0.0982</td>
-<td style="text-align: right;">0.974</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.95</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0767</td>
-<td style="text-align: right;">0.0731</td>
-<td style="text-align: right;">0.954</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.95</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0767</td>
-<td style="text-align: right;">0.0743</td>
-<td style="text-align: right;">0.969</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.99</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0026</td>
-<td style="text-align: right;">0.0025</td>
-<td style="text-align: right;">0.949</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.99</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0026</td>
-<td style="text-align: right;">0.0025</td>
-<td style="text-align: right;">0.949</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.995</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.995</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.999</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">URLLC</td>
-<td style="text-align: right;">0.999</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.9</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0536</td>
-<td style="text-align: right;">0.0069</td>
-<td style="text-align: right;">0.129</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.9</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0536</td>
-<td style="text-align: right;">0.0527</td>
-<td style="text-align: right;">0.982</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.95</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0031</td>
-<td style="text-align: right;">0.0003</td>
-<td style="text-align: right;">0.107</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.95</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0031</td>
-<td style="text-align: right;">0.0031</td>
-<td style="text-align: right;">0.987</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.99</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.99</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.995</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.995</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.999</td>
-<td style="text-align: left;">RL</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mMTC</td>
-<td style="text-align: right;">0.999</td>
-<td style="text-align: left;">block</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">–</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">3008</td>
+<td style="text-align: right;">0.871</td>
+<td style="text-align: left;">11/9/17</td>
+<td style="text-align: right;">0.61</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.671</td>
+<td style="text-align: right;">0.668</td>
+<td style="text-align: right;">+0.002</td>
+<td style="text-align: right;">0.00</td>
 </tr>
 </tbody>
 </table>
@@ -802,49 +683,304 @@ splits</th>
 ```
 
 
+
+```{=html}
+<div class="span" id="tab:confirm_C_pooled"><div class="tbl-num">Table 5<br/>Study C pooled over 400 splits (8 replications × 50). Confident viol. = a one-sided 95% Hoeffding lower bound on the test risk exceeds the budget.</div><table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Method</th>
+<th style="text-align: right;">Viol. freq. [95% CP CI]</th>
+<th style="text-align: right;">Confident viol.</th>
+<th style="text-align: right;">Coll. eMBB</th>
+<th style="text-align: right;">Coll. URLLC</th>
+<th style="text-align: right;">Coll. mMTC</th>
+<th style="text-align: right;">Attack delivered</th>
+<th style="text-align: right;">Fallback</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">RC-SIR-FS</td>
+<td style="text-align: right;">0.000 [0.000, 0.009]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0172</td>
+<td style="text-align: right;">0.0016</td>
+<td style="text-align: right;">0.0099</td>
+<td style="text-align: right;">0.496</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slice-FPR+block</td>
+<td style="text-align: right;">0.000 [0.000, 0.009]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0117</td>
+<td style="text-align: right;">0.0016</td>
+<td style="text-align: right;">0.0092</td>
+<td style="text-align: right;">0.526</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RC-SIR</td>
+<td style="text-align: right;">0.000 [0.000, 0.009]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0064</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0057</td>
+<td style="text-align: right;">0.576</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ERM</td>
+<td style="text-align: right;">0.003 [0.000, 0.014]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0272</td>
+<td style="text-align: right;">0.0029</td>
+<td style="text-align: right;">0.0238</td>
+<td style="text-align: right;">0.443</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Pooled LTT</td>
+<td style="text-align: right;">0.000 [0.000, 0.009]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0276</td>
+<td style="text-align: right;">0.0029</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.599</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">No action</td>
+<td style="text-align: right;">0.000 [0.000, 0.009]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.971</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Oracle</td>
+<td style="text-align: right;">0.000 [0.000, 0.009]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+```
+
+
+## Confirmatory Study N (relocating actions)
+
+**N-H1 (supported).** Under redirection, collateral exceeded the acted-benign fraction in 1.0% of episode–policy–slice entries, by up to 0.93. Two examples:
+
+- Redirecting in eMBB at threshold 0.995 gave eMBB collateral 0.0272 against an acted fraction of 0.0146.
+- Redirecting in eMBB at 0.95 caused URLLC collateral of 0.0055, although no URLLC UE was acted on.
+
+**N-H2 (not supported).** Slice-FPR with redirection violated its budgets in 0.000 of 200 splits (95% CI up to 0.018). The finite-sample margin of the FPR test kept it at conservative thresholds, where the excess collateral stayed below the budgets.
+
+A post-hoc large-sample analysis (not pre-registered) treats all 1500 episodes as the population:
+
+- **Redirect study:** 31 of the 441 policies that satisfy the per-slice FPR criterion have collateral above a budget, all of them involving redirection. The largest excess is 0.0044.
+- **Monotone study:** the corresponding count is 0, as Lemma 1 requires.
+
+The FPR certificate is therefore invalid in principle under relocation. In this model the error was small enough to be masked by statistical slack.
+
+**N-H3 (supported).** RC-SIR-FS violated in 0.000 of splits (CI up to 0.018). It also delivered less attack traffic (0.448) than Slice-FPR with redirection (0.533) or with blocking (0.546). This utility comparison is exploratory. ERM violated in 3.5% of splits.
+
+
+```{=html}
+<div class="span" id="tab:confirm_N"><div class="tbl-num">Table 6<br/>Study N, actions {block, redirect}, 200 splits (n_cal = 500). Redirect violates assumption A3.</div><table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Method</th>
+<th style="text-align: right;">Viol. freq. [95% CP CI]</th>
+<th style="text-align: right;">Confident viol.</th>
+<th style="text-align: right;">Coll. eMBB</th>
+<th style="text-align: right;">Coll. URLLC</th>
+<th style="text-align: right;">Coll. mMTC</th>
+<th style="text-align: right;">Attack delivered</th>
+<th style="text-align: right;">Fallback</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">RC-SIR-FS</td>
+<td style="text-align: right;">0.000 [0.000, 0.018]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0094</td>
+<td style="text-align: right;">0.0022</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.448</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slice-FPR+redirect</td>
+<td style="text-align: right;">0.000 [0.000, 0.018]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0202</td>
+<td style="text-align: right;">0.0005</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.533</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slice-FPR+block</td>
+<td style="text-align: right;">0.000 [0.000, 0.018]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0074</td>
+<td style="text-align: right;">0.0011</td>
+<td style="text-align: right;">0.0053</td>
+<td style="text-align: right;">0.546</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ERM</td>
+<td style="text-align: right;">0.035 [0.014, 0.071]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0406</td>
+<td style="text-align: right;">0.0064</td>
+<td style="text-align: right;">0.0013</td>
+<td style="text-align: right;">0.253</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">No action</td>
+<td style="text-align: right;">0.000 [0.000, 0.018]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.967</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Oracle</td>
+<td style="text-align: right;">0.000 [0.000, 0.018]</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+```
+
+
+## Cost
+
+- Certification and selection on 500 episodes took 4.6 ms.
+- Replay dominates: 0.122 ms per policy–episode evaluation in the fluid model on 4 vCPUs, i.e. about 0.16 s per calibration episode for 1331 policies.
+- Slice-FPR needs no replay. A packet-level twin or testbed replay would be far slower, which favours Slice-FPR whenever its utility is comparable.
+
 # Discussion {#sec:discussion}
 
-The answer to the research question is conditional. Certifying action-induced collateral directly admitted more mitigation than certifying false-positive rates only when three conditions held:
+The evidence supports a narrower answer than our exploratory study suggested.
 
-1. the harm ratio of the slice that limits the policy was well below one;
-2. the threshold grid had points in the resulting band;
-3. there were enough calibration episodes for a powerful testing procedure (fixed-sequence ordering rather than Bonferroni).
+**Under traffic-removing actions** (rate-limiting, blocking) and a monotone scheduler:
 
-When any of these failed, per-slice FPR certification was as good or better, and much cheaper, because it needs only benign detector scores rather than counterfactual replays.
+- Per-slice FPR certification is already a collateral certificate (Theorem 1).
+- Direct certification did not deliver a confirmed improvement across independent scenarios.
+- A gain appears only when the threshold grid contains points that the FPR test cannot certify but the collateral test can. In our replications this depended on the eMBB harm ratio and on how close the acted fraction was to the budget.
+- Since Slice-FPR needs only benign scores and no replay, it is the reasonable default in this regime.
 
-For operators this suggests a practical order of work:
+**When actions relocate traffic** (redirection to a scrubbing service over shared links, hairpinning, rerouting), the FPR criterion loses its justification. In the large-sample limit it accepted policies whose collateral exceeded the budget, including harm to slices in which no UE was acted on. Direct certification needs no monotonicity and remained valid. In Study N it also delivered less attack traffic than either FPR-certified variant, but that comparison was exploratory.
 
-1. Certify per-slice FPR first. Under a monotone scheduler (Lemma 1) it already bounds collateral.
-2. Estimate harm ratios per slice and action.
-3. Invest in replay-based certification only where those ratios are small.
+The practical recommendation is therefore to decide by *action type*:
+
+- **Traffic-removing actions:** use per-slice FPR certification.
+- **Traffic-relocating actions:** use direct, replay-based certification, and expect to need a replay engine with known fidelity.
+
+**Cost of a guarantee.** In scenarios with slack budgets, the uncertified empirical rule mitigated more and rarely violated. A guarantee costs attack mitigation, and that cost is visible in our data.
 
 # Limitations and Threats to Validity {#sec:limits}
 
-**Simulation only.** All results come from a fluid model of a three-slice egress link with synthetic traffic, not from a 5G core, a RAN or real traces. The checkpoint that preceded this study found no accessible testbed. 5G-NIDD [@siriwardhana2025nidd] could not be retrieved in the execution environment, and it carries no slice labels or SLA outcomes, so it could not supply $L^c_s$. The guarantees are properties of the procedure under A1–A3 and do not depend on the simulator; the *utility* comparisons do.
+**Simulation only.**
 
-**Assumption A3.** Monotonicity was verified for our scheduler, not for real UPF implementations. Congestion-controlled transports, active queue management and adaptive application behaviour can violate it. If A3 fails, Lemma 1 and Corollary 1 fail, and per-slice FPR certification no longer bounds collateral. Direct certification (Proposition 1) does not need A3.
-
-**Design iterations, disclosed.**
-
-1. *First traffic model.* It used a single regime and gave a detector with AUC 0.99999, under which every method trivially met its budgets. We replaced it with the train/deploy regime model before analysing method results, and archived it.
-2. *Objective.* The first full analysis used the benign-violation index $J$ as the selection objective, contrary to the pre-specified formulation (minimise $R^a$). Under $J$ the constraints were never active and no method violated its budgets. We corrected the objective; the $J$-objective results are archived.
-3. *Recommended variant.* Both certification variants were specified before results. Recommending the fixed-sequence variant is a post-hoc choice that the results motivated.
-
-The full record is in `DESIGN_LOG.md` and `research_decisions.md`.
+- All evidence comes from a fluid model with synthetic traffic.
+- No 5G core, UPF or RAN was available to this study.
+- Public 5G intrusion datasets [@siriwardhana2025nidd] lack slice labels and SLA outcomes, so they cannot provide $L^c_s$.
+- The guarantees (Proposition 1) do not depend on the simulator; the utility comparisons and the size of the harm ratios do.
+- Theorem 1 is proven for the modelled scheduler only. Congestion control, active queue management on shared queues, application retries and enforcement delay are not modelled; each could break monotonicity or change the harm ratios.
 
 **Statistics.**
 
-- The 200 splits reuse one pool of 1500 episodes, so split-level summaries describe variability over calibration draws, not independent replications. We therefore report quantiles and win fractions rather than p-values for method differences.
-- A violation frequency of zero over 200 splits is consistent with the target $\delta=0.1$, but it does not show that the bound is tight. The budgets were rarely binding for certified methods.
+- Exploratory splits reuse one pool; confirmatory inference uses eight independent replications, which is a small number.
+- Zero observed violations are consistent with the guarantee but say nothing about its tightness: realised collateral was well below the budgets.
 
-**Episodes.** Actions are fixed for the whole action window. Episodes are i.i.d. by construction, whereas real traffic has temporal dependence that A1 ignores.
+**Not compared.**
 
-**Baselines not reproduced.** Model-based intrusion-response policies [@hammar2022optimalstopping; @hammar2024dynamic] require an attacker model and simulator interface that we did not reimplement faithfully. They optimise a different criterion and provide no collateral certificate, so they would answer a different question.
+- Model-based response policies [@hammar2022optimalstopping; @hammar2024dynamic].
+- Adaptive attackers.
+- Temporal dependence between episodes.
+
+**Twin transfer.** Proposition 2 in Appendix [A](#app:proof) gives a valid but, at our sample sizes, vacuous guarantee.
 
 # Conclusion {#sec:conclusion}
 
-We asked whether certifying the per-slice SLA collateral of mitigation actions buys more attack mitigation than certifying per-slice false-positive rates. Under a monotone user-plane scheduler, false-positive certification already bounds collateral. Direct certification can only exploit the harm ratio, at the price of counterfactual replay and a larger hypothesis space.
+We compared two ways of certifying the collateral SLA harm of detector-triggered mitigation in a sliced user plane: certifying it directly from counterfactual replay, or certifying per-slice false-positive rates.
 
-In our simulation study both certified approaches always met their budgets, while uncalibrated selection did not. Direct certification with fixed-sequence testing reduced delivered attack traffic relative to per-slice FPR certification in most calibration draws at nominal budgets and moderate calibration sizes. It lost that advantage with small calibration sets, at other budget levels, and with Bonferroni control.
+For the scheduler we model, a proof shows that traffic-removing actions cannot harm non-acted UEs. Per-slice false-positive certification is then a sufficient collateral certificate. Across eight pre-registered independent replications, direct certification did not improve attack mitigation by a confirmed margin, and its Bonferroni form was worse.
 
-Validating A3 on a real UPF, obtaining slice-labelled traces with SLA outcomes, and tightening twin-transfer bounds are the steps needed before these findings can inform deployment.
+Relocating actions break the monotonicity argument: the false-positive criterion accepted policies with excess collateral, while direct certification remained valid.
+
+The results argue for choosing the certificate by action type. They also identify what is still needed: monotonicity analysis for real UPF implementations, replay engines with bounded error, and slice-labelled traces with SLA outcomes.
+
+# Appendix A: Proofs {#app:proof .unnumbered}
+
+**Allocation.**
+
+- The implemented scheduler first serves $\min(a_s,g_sC)$ and then divides leftover capacity in proportion to $w$ among classes with remaining demand.
+- Each round either exhausts the leftover or saturates at least one class, so $|\mathcal{S}|$ rounds give the exact water-filling solution $x_s=\min(a_s,g_sC+w_s\theta)$.
+- $\Phi(\theta;a)=\sum_s\min(a_s,g_sC+w_s\theta)$ is non-decreasing in $a$ and $\theta$, so $\theta$ is non-increasing in every $a_{s'}$. Hence:
+  - the residual $r_s=\max(0,a_s-g_sC-w_s\theta)$ is non-decreasing in every coordinate of $a$;
+  - $r_s>0$ implies $x_s=g_sC+w_s\theta$.
+
+**Queues.** With $q_s(t+1)=\min(B_s,r_s(t))$ and overflow $O_s(t)=\max(0,r_s(t)-B_s)$, componentwise smaller arrivals in every slot give $q'\le q$ and $O'\le O$, by induction.
+
+**Proof of Theorem 1.** Fix slot $t$ and slice $s$ of a non-acted benign UE. Let $A_s$ be the slot's arrivals and $\Delta=A_s-A'_s\ge0$.
+
+- **Drop fraction.**
+  - If $O'>0$, then $r'_s>0$, so $x'_s=g_sC+w_s\theta'\ge g_sC+w_s\theta\ge x_s$.
+  - Since $O\ge O'>0$, $O=q+A_s-x_s-B_s$.
+  - Then $O'\le O-\Delta$, and $f'=O'/(A_s-\Delta)\le(O-\Delta)/(A_s-\Delta)\le O/A_s=f$, using $O\le A_s$ (because $q\le B_s$).
+- **Delay.**
+  - If $q'(t+1)>0$, both residuals are positive, so $x'_s\ge x_s\ge g_sC>0$ and delay$'=q'(t+1)/x'_s\le q(t+1)/x_s=$ delay.
+- **SLA indicators.** The UE's own arrivals are unchanged. Its delivered fraction $\sum_tD_u(t)(1-f_s(t))$ and its 95th-percentile delay over unchanged active slots are therefore monotone. ∎
+
+**Proposition 2 (twin transfer).** Suppose $|\tilde{R}^c_s(\lambda)-R^c_s(\lambda)|\le\varepsilon_s$ for all $\lambda,s$ on an event of probability at least $1-\eta$. Certifying the twin at $\alpha_s-\varepsilon_s$ gives $\Pr\{\forall s:R^c_s(\hat{\lambda})\le\alpha_s\}\ge1-\delta-\eta$, by a union bound. Estimating $\varepsilon_s$ from $m$ paired episodes requires a uniform deviation term of order $\sqrt{\log(|\mathcal{S}||\Lambda|/\eta)/2m}$, which is about 0.14 at $m=300$.
+
+# Appendix B: Disclosed Deviations {#app:deviations .unnumbered}
+
+1. **First simulator.** It had a single traffic regime and yielded a detector with AUC 0.99999, which made every method trivially valid. It was replaced by the benchmark/operational regime model before method results were analysed, and archived.
+2. **Selection objective.** The first full exploratory analysis used $J$ as the selection objective, contrary to the pre-specified objective $R^a$. This was corrected; the $J$-objective results are archived.
+3. **Recommended variant.** RC-SIR-FS was chosen as the recommended variant after the exploratory results. The confirmatory studies were designed to test it on new data.
+4. **Supervised detector.** A gradient-boosting detector with saturated scores made all methods coincide. It is reported only in the repository.

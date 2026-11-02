@@ -1,10 +1,11 @@
-| Approach | What it provides | Assumptions / limits | Difference in this work | Measured here | Where it is better |
-|:--|:--|:--|:--|:--|:--|
-| Conformal outlier / FPR control [@bates2023outliers; @youssef2026caliburn] | Finite-sample alert-level FPR/FDR or FP-budget control | Exchangeability; certifies alerts, not action outcomes; not slice-indexed | Certifies slice-indexed SLA outcomes of actions | 1% FPR operating point: {{main::Conformal FPR 1% + block::attack_delivered_mean@.3f}} attack delivered | Needs no replay; simplest to deploy |
-| Per-slice certified FPR (Corollary 1, our baseline) | Collateral certificate via Lemma 1 | Requires monotone scheduler (A3) | Direct certification exploits harm ratio < 1 | {{main::Slice-FPR certified + block::attack_delivered_mean@.3f}} attack delivered | Small calibration sets, halved/doubled budgets, expensive replay |
-| LTT / CRC [@angelopoulos2025ltt; @angelopoulos2024crc] | Generic risk-control machinery | i.i.d. calibration | Used unchanged; we add the counterfactual slice-collateral formulation and structural analysis | Bonferroni variant: {{main::RC-SIR (ours)::attack_delivered_mean@.3f}}; fixed-sequence: {{main::RC-SIR-FS (ours)::attack_delivered_mean@.3f}} | n/a |
-| Optimal-stopping / game-theoretic response [@hammar2022optimalstopping; @zonouz2014rre] | Optimal threshold response under a model | Attacker/system model; no distribution-free collateral bound | Distribution-free per-slice collateral certificate | Not reproduced (Section 8) | Optimises response timing, which our episodic model does not |
-| Conformal policy control [@prinster2026cpc] | Risk-controlled deviation from a safe policy | Generic; safe reference policy | Network-specific counterfactual loss, slice structure | Not compared (different setting) | Online policy improvement |
-| Pooled certification (ablation) | One certificate across slices | Ignores slice heterogeneity | Per-slice budgets | {{main::Pooled LTT::attack_delivered_mean@.3f}} attack delivered | None observed |
+| Approach | What it certifies or optimises | Key assumption | Difference from this work | Compared here |
+|:--|:--|:--|:--|:--|
+| Conformal outlier / alert-threshold control [@bates2023outliers; @youssef2026caliburn] | Alert-level FPR, FDR or false-positive budget | Exchangeability | Certifies slice-indexed SLA outcomes of actions | Exploratory: 1% FPR operating point |
+| Per-slice certified FPR (Corollary 1) | Collateral, via Theorem 1 | Monotone scheduling and traffic-removing actions | Direct certification does not need monotonicity | Primary comparator (all studies) |
+| LTT / CRC [@angelopoulos2025ltt; @angelopoulos2024crc] | Generic risks by multiple testing | i.i.d. calibration | Used unchanged; we add the counterfactual slice-collateral formulation and the structural analysis | — |
+| Conformal policy control [@prinster2026cpc] | Risk of deviating from a safe policy | Safe reference policy | Network counterfactual, slice structure, relocating actions | Not compared (different setting) |
+| Optimal-stopping / game-theoretic response [@hammar2022optimalstopping; @zonouz2014rre] | Model-optimal response | Attacker and system model | No model; distribution-free per-slice certificate | Not compared (different criterion) |
+| Pooled certification (ablation) | One certificate across slices | — | Per-slice budgets | Exploratory, Study C |
+| Empirical constrained selection (ERM) | No guarantee | — | Statistical margin | All studies |
 
-: Comparison with the closest approaches (qualitative columns from the cited papers' abstracts; "Measured here" from our experiments).
+: Comparison with the closest approaches. Qualitative columns are based on the cited papers' abstracts.

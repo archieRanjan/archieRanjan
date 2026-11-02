@@ -27,3 +27,12 @@
 - Collateral and attack outcomes are measured only in the action window.
 
 **Integrity:** `code/check_determinism.py` regenerates sample episodes from the seeds and matches the stored tables exactly (`logs/determinism_check.log`).
+
+## Confirmatory data (`data_confirm/`, Studies C and N; ANALYSIS_PLAN_v2.md)
+
+| File | Contents |
+|---|---|
+| `C_rep{1..8}.npz` / `.json` | One independent replication each (master seed 3000 + r). The scenario is drawn from the seed; a fresh Isolation Forest is trained on 600 benchmark-regime episodes; 1500 deployment episodes. Arrays `Lc`, `Vb`, `Ad` cover 1331 policies plus π_0 and the oracle, with actions {rate-limit, block}. |
+| `N.npz` / `.json` | Seed 4001, base scenario, actions {block, redirect} (`sim_ext`); additionally `Fa` (acted-benign fraction per policy) |
+
+These seeds were never used before the plan was committed.

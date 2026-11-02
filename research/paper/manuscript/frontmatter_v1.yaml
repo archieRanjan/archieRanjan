@@ -1,0 +1,30 @@
+title: "Certifying the Collateral Cost of Intrusion Response in Sliced 5G User Planes: Direct Risk Control Versus False-Positive Control"
+short_title: "Certifying Collateral Cost of Slice-Aware Intrusion Response"
+authors: "[Author names and affiliations to be supplied]"
+date: "Preprint, 2 November 2026"
+journal: "IEEE Transactions on Network and Service Management (target)"
+abstract: >-
+  Mitigating a flagged user equipment by rate-limiting or blocking it harms benign users whenever the
+  detector errs, and in a sliced 5G user plane the harm depends on the slice and the action. Existing
+  calibrated intrusion detectors certify alert-level false-positive rates, and intrusion-response
+  methods offer only model-based guarantees. We ask whether certifying each slice's action-induced
+  service-level-agreement (SLA) violation risk directly admits more attack mitigation than certifying
+  each slice's false-positive rate at equal budgets and confidence. We define collateral risk against
+  the no-action counterfactual and prove that, under a monotone scheduler, it is bounded by the per-slice
+  acted-benign fraction. Per-slice false-positive certification is therefore also a collateral certificate,
+  and any gain from direct certification must come from the ratio between the two. We certify 1331
+  per-slice rate-limit/block policies with Learn-then-Test risk control on replayed counterfactual
+  outcomes, and evaluate in a fluid simulator of a three-slice egress link whose detector is deployed under
+  domain shift. Over 200 calibration/test splits, no certified method exceeded its budgets, while
+  empirically constrained selection did in {{ncal::100::ERM (no margin)::viol_freq@pct}} of splits with
+  100 calibration episodes. With fixed-sequence testing, direct certification delivered
+  {{main::RC-SIR-FS (ours)::attack_delivered_mean@.3f}} of attack traffic versus
+  {{main::Slice-FPR certified + block::attack_delivered_mean@.3f}} for false-positive certification,
+  winning in {{paired::RC-SIR-FS vs Slice-FPR::frac_splits_A_better_attack@pct}} of paired splits. The
+  advantage vanished with small calibration sets, other budget levels, or Bonferroni control. Direct
+  certification pays off only where harm ratios are well below one.
+keywords: "Network slicing, intrusion response, risk control, Learn-then-Test, service-level agreements, false-positive control, 5G user plane"
+ack: "Simulation, analysis and drafting were carried out with the assistance of an AI coding assistant (Claude Code). All numbers are produced by the released code; all references carry a recorded verification status."
+declarations: >-
+  Code and data: `research/paper/` (simulator, experiments, raw logs, results JSON). No external datasets
+  were used. Funding and competing interests: to be completed by the authors.

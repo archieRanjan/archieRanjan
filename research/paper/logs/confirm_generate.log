@@ -1,0 +1,9 @@
+N {"auc": 0.8836003634592327, "attack_episode_frac": 0.6033333333333334, "runtime_s": 411.29140424728394}
+C_rep1 {"auc": 0.8874757546688791, "attack_episode_frac": 0.536, "runtime_s": 320.192706823349}
+C_rep2 {"auc": 0.9218570766615104, "attack_episode_frac": 0.62, "runtime_s": 330.3747560977936}
+C_rep3 {"auc": 0.9148788203496989, "attack_episode_frac": 0.792, "runtime_s": 300.1421751976013}
+C_rep4 {"auc": 0.8776685933286728, "attack_episode_frac": 0.5633333333333334, "runtime_s": 249.36361074447632}
+C_rep5 {"auc": 0.8622795349538656, "attack_episode_frac": 0.626, "runtime_s": 272.9857268333435}
+C_rep6 {"auc": 0.8777205977907732, "attack_episode_frac": 0.4226666666666667, "runtime_s": 318.99110889434814}
+C_rep7 {"auc": 0.8850378888007755, "attack_episode_frac": 0.7086666666666667, "runtime_s": 257.9518983364105}
+C_rep8 {"auc": 0.8711482772413006, "attack_episode_frac": 0.624, "runtime_s": 277.41128301620483}

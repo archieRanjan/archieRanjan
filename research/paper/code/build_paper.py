@@ -12,6 +12,7 @@ import yaml
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MS, RES, FIG = ROOT / "manuscript", ROOT / "results", ROOT / "figs"
 res = json.loads((RES / "results.json").read_text())
+res_confirm = json.loads((ROOT / "results_confirm" / "results_confirm.json").read_text())
 fm = yaml.safe_load((MS / "frontmatter.yaml").read_text())
 TABLE_NO, FIG_NO = {}, {}
 
@@ -24,6 +25,8 @@ def run(cmd, **kw):
 
 def lookup(path):
     cur = res
+    if path[0] == "confirm":
+        cur, path = res_confirm, path[1:]
     for p in path:
         cur = cur[int(p)] if isinstance(cur, list) else cur[p]
     return cur
@@ -43,7 +46,7 @@ def fill_numbers(text):
 
 
 def read_table(name):
-    for d in (RES / "tables", MS / "tables_static"):
+    for d in (RES / "tables", ROOT / "results_confirm" / "tables", MS / "tables_static"):
         if (d / f"{name}.md").exists():
             return (d / f"{name}.md").read_text()
     raise FileNotFoundError(name)
@@ -110,7 +113,7 @@ ALGO_MD = """<div class="algo"><b>Algorithm 1.</b> RC-SIR / RC-SIR-FS certificat
 
 def expand(text, mode):
     def tab(m):
-        name = m.group(1); TABLE_NO.setdefault(name, len(TABLE_NO) + 1)
+        name = m.group(1)
         md = fill_numbers(read_table(name))
         if mode == "latex":
             return "\n```{=latex}\n" + md_table_to_latex(md, "tab:" + name) + "\n```\n"
@@ -121,12 +124,12 @@ def expand(text, mode):
         return (f'\n```{{=html}}\n<div class="span" id="tab:{name}"><div class="tbl-num">Table {TABLE_NO[name]}<br/>{cap}</div>'
                 + html_tab + "</div>\n```\n")
     def figr(m):
-        name, cap = m.group(1), m.group(2); FIG_NO.setdefault(name, len(FIG_NO) + 1)
+        name, cap = m.group(1), m.group(2)
         if mode == "latex":
             return ("\n```{=latex}\n\\begin{figure*}[!t]\\centering\\includegraphics[width=0.95\\textwidth]{figures/" + name +
                     ".pdf}\\caption{" + cap + "}\\label{fig:" + name.replace("fig_", "") + "}\\end{figure*}\n```\n")
         return f'\n<figure id="fig:{name}"><img src="{(FIG / (name + ".png")).as_posix()}"/><figcaption><b>Fig. {FIG_NO[name]}.</b> {cap}</figcaption></figure>\n'
-    text = re.sub(r"\{\{table:([a-z_]+)\}\}", tab, text)
+    text = re.sub(r"\{\{table:([A-Za-z_]+)\}\}", tab, text)
     text = re.sub(r"\{\{figure:([a-z_]+)\|(.+?)\}\}", figr, text)
     text = text.replace("{{algorithm}}", "\n```{=latex}\n" + ALGO_TEX + "\n```\n" if mode == "latex" else "\n" + ALGO_MD + "\n")
     text = fill_numbers(text)
@@ -135,23 +138,40 @@ def expand(text, mode):
 
 
 src = (MS / "paper.md").read_text()
+for i, n in enumerate(dict.fromkeys(re.findall(r"\{\{table:([A-Za-z_]+)\}\}", src)), 1):
+    TABLE_NO[n] = i
+for i, n in enumerate(dict.fromkeys(re.findall(r"\{\{figure:([a-z_]+)\|", src)), 1):
+    FIG_NO[n] = i
+
+
+def number_refs(text, mode):
+    """Cross-references are written as Table [?](#tab:name) / Fig. [?](#fig:name) and numbered automatically."""
+    if mode == "latex":
+        text = re.sub(r"Table \[[^\]]*\]\(#tab:(\w+)\)", r"Table~\\ref{tab:\1}", text)
+        return re.sub(r"Fig\. \[[^\]]*\]\(#fig:(\w+)\)", r"Fig.~\\ref{fig:\1}", text)
+    text = re.sub(r"Table \[[^\]]*\]\(#tab:(\w+)\)", lambda m: f"Table {TABLE_NO[m.group(1)]}", text)
+    return re.sub(r"Fig\. \[[^\]]*\]\(#fig:(\w+)\)", lambda m: f"Fig. {FIG_NO['fig_' + m.group(1)]}", text)
+
 # map the hand-written cross-reference numbers to labels in LaTeX
 REFMAP = {"tab:cmp": "tab:comparison", "tab:main": "tab:main", "tab:paired": "tab:paired", "tab:harm": "tab:harm_ratio"}
-filled_md = expand(src, "html"); (MS / "paper_filled.md").write_text(filled_md)
+filled_md = number_refs(expand(src, "html"), "html"); (MS / "paper_filled.md").write_text(filled_md)
 abstract = fill_numbers(fm["abstract"])
 
 
 # ---------------------------------------------------------------- IEEEtran LaTeX
-latex_md = expand(src, "latex")
-for k, v in REFMAP.items():
-    latex_md = re.sub(r"Table \[\d+\]\(#" + k + r"\)", r"Table~\\ref{" + v + "}", latex_md)
-latex_md = re.sub(r"Fig\. \[\d+\]\(#fig:(\w+)\)", r"Fig.~\\ref{fig:\1}", latex_md)
+latex_md = number_refs(expand(src, "latex"), "latex")
 latex_md = re.sub(r"Section \[\d+\]\(#(sec:\w+)\)", r"Section~\\ref{\1}", latex_md)
+latex_md = re.sub(r"Appendix \[[^\]]*\]\(#(app:\w+)\)", r"Appendix~\\ref{\1}", latex_md)
 tex = run(["pandoc", "--from", "markdown", "--to", "latex", "--natbib", "--top-level-division=section"], input=latex_md)
 tex = tex.replace(r"\citep{", r"\cite{").replace(r"\citet{", r"\cite{")
 tex = re.sub(r"\\label\{(sec:\w+)\}", r"\\label{\1}", tex)
-for a, b in {"≤": r"$\le$", "≥": r"$\ge$", "±": r"$\pm$", "–": "--", "—": "---", "×": r"$\times$", "∎": r"$\square$"}.items():
+for a, b in {"≤": r"$\le$", "≥": r"$\ge$", "±": r"$\pm$", "–": "--", "—": "---", "×": r"$\times$", "∎": r"$\square$", "−": "-"}.items():
     tex = tex.replace(a, b)
+import re as _re
+_i = tex.find("\\section*{Appendix A")
+if _i >= 0:
+    tex = tex[:_i] + "\\appendices\n" + tex[_i:]
+    tex = _re.sub(r"\\section\*\{Appendix [AB]: ([^}]*)\}", r"\\section{\1}", tex)
 (MS / "body.tex").write_text(tex)
 figdir = MS / "figures"; figdir.mkdir(exist_ok=True)
 for f in FIG.glob("*.pdf"):

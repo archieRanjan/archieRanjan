@@ -7,38 +7,33 @@
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \newtheorem{lemma}{Lemma}\newtheorem{proposition}{Proposition}
 \begin{document}
-\title{Certifying the Collateral Cost of Intrusion Response in Sliced 5G User Planes: Direct Risk Control Versus False-Positive Control}
+\title{When Does Direct Collateral-Risk Certification Improve Slice-Aware Intrusion Response?}
 \author{[Author names and affiliations to be supplied]}
-\markboth{IEEE Transactions on Network and Service Management (submitted)}{Certifying Collateral Cost of Slice-Aware Intrusion Response}
+\markboth{IEEE Transactions on Network and Service Management (submitted)}{Direct vs. False-Positive Certification of Intrusion Response}
 \maketitle
 \begin{abstract}
-Mitigating a flagged user equipment by rate-limiting or blocking it
-harms benign users whenever the detector errs, and in a sliced 5G user
-plane the harm depends on the slice and the action. Existing calibrated
-intrusion detectors certify alert-level false-positive rates, and
-intrusion-response methods offer only model-based guarantees. We ask
-whether certifying each slice's action-induced service-level-agreement
-(SLA) violation risk directly admits more attack mitigation than
-certifying each slice's false-positive rate at equal budgets and
-confidence. We define collateral risk against the no-action
-counterfactual and prove that, under a monotone scheduler, it is bounded
-by the per-slice acted-benign fraction. Per-slice false-positive
-certification is therefore also a collateral certificate, and any gain
-from direct certification must come from the ratio between the two. We
-certify 1331 per-slice rate-limit/block policies with Learn-then-Test
-risk control on replayed counterfactual outcomes, and evaluate in a
-fluid simulator of a three-slice egress link whose detector is deployed
-under domain shift. Over 200 calibration/test splits, no certified
-method exceeded its budgets, while empirically constrained selection did
-in 25.5\% of splits with 100 calibration episodes. With fixed-sequence
-testing, direct certification delivered 0.417 of attack traffic versus
-0.458 for false-positive certification, winning in 93.5\% of paired
-splits. The advantage vanished with small calibration sets, other budget
-levels, or Bonferroni control. Direct certification pays off only where
-harm ratios are well below one.
+Mitigating a flagged user equipment harms benign users when the detector
+errs, and in a sliced 5G user plane the harm depends on the slice and
+the action. We ask when certifying each slice's action-induced
+service-level-agreement (SLA) violation risk directly, using
+counterfactual replay and Learn-then-Test risk control, admits more
+attack mitigation than certifying per-slice false-positive rates. We
+prove that for a work-conserving water-filling scheduler,
+traffic-removing actions cannot harm non-acted users, so false-positive
+certification already bounds collateral. Relocating actions, such as
+redirection to a scrubbing service, break this bound. In a fluid
+simulator with a detector under domain shift, certified methods kept
+every budget in all splits. In eight pre-registered independent
+replications, the improvement of direct over false-positive
+certification was not confirmed: the mean change in delivered attack
+fraction was -0.030, with 95\% interval {[}-0.071, +0.011{]}. With
+redirection, a post-hoc large-sample analysis showed the false-positive
+criterion accepting policies that exceed their budgets, although no
+finite-sample violations were observed; direct certification remained
+valid. The certificate should be chosen by action type.
 \end{abstract}
 \begin{IEEEkeywords}
-Network slicing, intrusion response, risk control, Learn-then-Test, service-level agreements, false-positive control, 5G user plane
+Network slicing, intrusion response, risk control, Learn-then-Test, service-level agreements, false-positive control, user plane
 \end{IEEEkeywords}
 \input{body}
 \section*{Acknowledgment}

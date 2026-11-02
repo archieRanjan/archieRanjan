@@ -53,3 +53,20 @@ Simulation only (no RAN, no 5G core software, no real traces). Episodic, non-ada
 | H2 | Supported: ERM violated in 25.5% / 15.5% / 10.0% of splits at n = 100 / 250 / 500. |
 | H3 | Conditionally supported. Only the fixed-sequence variant beats Slice-FPR at nominal budgets (0.417 vs 0.458 attack delivered; better in 93.5% of splits). The Bonferroni variant is worse in 100% of splits. There is no gain at n ≤ 250 or at α × 0.5 / × 2. |
 | H4 | Partially supported. The gain arises in eMBB (ρ ≈ 0.54), via the statistical-margin component rather than the deterministic band. |
+
+## Revised question and confirmatory outcome (after the external audit; see ANALYSIS_PLAN_v2.md)
+
+**Question (narrowed):** *When* does direct certification admit more mitigation than per-slice FPR certification? The paper makes no claim about intrusion response in general.
+
+| Pre-registered endpoint | Outcome (`results_confirm/results_confirm.json`) |
+|---|---|
+| C-E1 validity | Supported: 0 / 400 splits for all certified methods (95% CP upper bound 0.009). ERM 0.003. No "confident" violations. |
+| C-E2 primary (FS − Slice-FPR < 0) | **Not confirmed.** Mean −0.030, 95% t-interval [−0.071, +0.011]; 6 / 8 replications negative; sign-test p = 0.29. |
+| C-E3 secondary | Bonferroni − Slice-FPR = +0.051 [+0.009, +0.092] (worse). FS − ERM = +0.052 [+0.011, +0.093] (ERM mitigates more). |
+| N-H1 A3 violated under redirect | Supported: 1.0% of entries; max excess 0.93 |
+| N-H2 FPR + redirect violates budgets in finite samples | **Not supported** (0 / 200) |
+| N-H3 direct certification valid under redirect | Supported (0 / 200) |
+
+**Post-hoc (exploratory):**
+- Large-sample analysis: 31 of 441 FPR-feasible policies with redirect have collateral above the budget (0 in the monotone study).
+- Heterogeneity across replications tracks the Remark 1 margin band (Spearman −0.85, n = 8).

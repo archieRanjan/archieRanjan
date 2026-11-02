@@ -30,11 +30,23 @@ What each step does:
 
 | Step | Purpose | Runtime / output |
 |---|---|---|
-| `pytest` | 12 unit and integration tests | ≈2 s |
+| `pytest` | 18 tests: unit, integration, known-risk Monte Carlo, method consistency, redirect counterexample | ≈30 s |
 | `generate.py` | Detector training + 7.06 M policy–episode replays | ≈15 min on 4 vCPU; writes `data/` |
 | `check_determinism.py` | Seeds → identical loss tables | ≈1 min |
 | `experiments.py` | All experiments | ≈1 min; writes `results/results.json`, `results/tables/`, `figs/` |
 | `build_paper.py` | Manuscript build | Writes `manuscript/main.tex`, `body.tex`, `manuscript.pdf`, `paper_filled.md` |
+
+**Confirmatory studies (≈50 min on 4 vCPU), then the full analysis:**
+
+```bash
+python3 -I code/confirm_generate.py all
+```
+
+```bash
+python3 -I code/confirm_analysis.py
+```
+
+`confirm_analysis.py` writes `results_confirm/results_confirm.json` and `results_confirm/tables/`. Manuscript placeholders that start with `confirm::` resolve from that file.
 
 **Traceability:** every number in `manuscript/paper.md` is a placeholder `{{path::to::key@format}}` resolved from `results/results.json`. `paper_filled.md` shows the resolved text. Search `paper.md` for a number's placeholder to find its source key.
 

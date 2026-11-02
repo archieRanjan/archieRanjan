@@ -14,3 +14,10 @@
 | R-10 | Model-based response baseline (Hammar & Stadler) not reimplemented: it optimises a different criterion and needs an attacker model. | — | Limitation |
 | R-11 | Target journal: IEEE TNSM (security management, closed-loop assurance). The contribution is a formulation, a structural result and an empirical characterisation; it is not a new statistical theorem. | — | Provisional |
 | R-12 | Gate 1 (novelty) recorded as **conditionally passed**. The distinction from prior work is in what is certified and in Lemma 1 / Remark 1. The certification machinery is not new. Full-text verification of competitors remains impossible in this environment. | `novelty/novelty_audit.md` | Open risk |
+| R-13 | External audit received (score 5.2/10). Responded with: a frozen pre-registered plan (commit d5518c3) before new data; independent replications; non-monotone study; scheduler monotonicity proof; implementation audit; reference fixes; narrowed claim; new title. | Audit text; `ANALYSIS_PLAN_v2.md` | Done |
+| R-14 | Monotonicity (A3) proven for the implemented scheduler (Theorem 1); counterexample for relocating actions (Proposition 0 + unit test). | `proof_audit.md` | Done |
+| R-15 | **Primary improvement claim not confirmed** in Study C. The paper is reframed: the certificate should be chosen by action type; FPR certification is the default for traffic-removing actions. | `results_confirm/` | Done |
+| R-16 | N-H2 not supported. The invalidity of the FPR criterion under relocation is shown only in a post-hoc large-sample analysis and labelled as such. | `results_confirm/` | Done, disclosed |
+| R-17 | Twin-transfer proposition demoted to an appendix and a limitation (vacuous at our sample sizes). | Exploratory results | Done |
+| R-18 | References corrected: SliceSecure → IEEE FNWF 2022 pp. 639–642 (DBLP); Amponis et al. co-authors and pages; CALIBURN cited as arXiv v2 (25 Jun 2026; abstract-page title); Layeghy & Portmann author list confirmed by the UQ record. | Web records | Done |
+| R-19 | A real IEEEtran compile is still impossible (no TeX; CTAN and GitHub releases unreachable). | Environment | Open |

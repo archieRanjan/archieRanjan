@@ -1,15 +1,16 @@
-# Contribution–evidence matrix
+# Contribution–evidence matrix (revised after the confirmatory studies)
 
-| Contribution (as claimed in the manuscript) | Type | Evidence | Location | Strength |
-|---|---|---|---|---|
-| Definition of action-induced collateral against the π_0 counterfactual | Formulation | Definition 1; implemented in `sim.episode_losses` | paper §3; code | Definition (no empirical claim) |
-| Lemma 1: collateral ≤ acted-benign fraction under A3 | Theory | Proof (paper §3); unit test `test_lemma1_actions_never_harm_non_acted_ues`; exhaustive pool check (max excess 2.6e-8) | `results.json: lemma1_check` | Proven under A3; A3 verified only for this simulator |
-| Remark 1: the harm ratio is the only deterministic source of gain | Analysis (identity) | Harm-ratio table; budget sensitivity | `results/tables/harm_ratio.md`, `sensitivity.md` | Identity; prediction partially confirmed (the gain came via the statistical margin) |
-| Proposition 1: validity of RC-SIR / RC-SIR-FS | Theory (follows from LTT) | Proof; 0 violations in 200 splits at all n | `main.md`, `ncal.md` | Proven; consistent empirically (not a tightness test) |
-| Corollary 1: per-slice FPR certification is a collateral certificate | Theory | Lemma 1 + LTT; 0 violations | `main.md` | Proven under A3 |
-| Proposition 2: twin transfer | Theory | Proof; experiment shows the rigorous ε̂ makes it vacuous at m = 300 | `twin.md` | Proven, but impractical as tested (negative) |
-| Direct certification (FS) beats Slice-FPR at nominal budgets | Empirical | 0.417 vs 0.458 attack delivered; better in 93.5% of paired splits | `main.md`, `paired.md` | Simulation only; conditional |
-| No advantage at small n, other budgets, or with Bonferroni | Empirical (negative) | n-sweep, sensitivity, paired RC-SIR vs Slice-FPR | `ncal.md`, `sensitivity.md`, `paired.md` | Simulation only |
-| Uncalibrated selection violates budgets | Empirical | ERM 25.5% (n = 100), 10% (n = 500) | `ncal.md`, `main.md` | Simulation only |
-| Multi-action policies give no measurable benefit | Empirical (negative) | 0.417 vs 0.418 | `ablation.md` | Simulation only |
-| Calibration cost negligible; replay dominates | Empirical | 3.8 ms selection; 0.12 ms per policy-episode replay (fluid model, 4 vCPU) | `results.json: cost` | Machine-specific |
+| Claim in the revised manuscript | Type | Evidence | Strength |
+|---|---|---|---|
+| Collateral definition against the π_0 counterfactual | Formulation | Definition 1; `sim.episode_losses` | Definition |
+| Theorem 1: the implemented scheduler is monotone under traffic-removing actions | Theory | Proof (Appendix A, `proof_audit.md`); unit test; exhaustive pool check | Proven for the model; not for real UPFs |
+| Lemma 1 / Corollary 1: FPR certification bounds collateral | Theory | Follows from Theorem 1; 0 large-sample invalid policies in the monotone study | Proven under Theorem 1's conditions |
+| Proposition 0: relocating actions break Lemma 1, including across slices | Theory (construction) + data | Unit test; Study N: excess in 1.0% of entries, max 0.93; cross-slice URLLC harm | Shown by construction and in simulation |
+| Proposition 1: validity of RC-SIR / RC-SIR-FS | Theory (LTT corollary) | Proof; known-risk Monte Carlo (0.07% vs δ = 10%); 0 / 400 and 0 / 200 confirmatory violations | Proven; empirically consistent (not a tightness test) |
+| Direct certification improves mitigation over FPR certification | Empirical | **Not confirmed** (Study C: −0.030 [−0.071, +0.011]) | Negative / inconclusive |
+| The gain depends on the margin band (Remark 1) | Empirical, post hoc | Spearman −0.85 over 8 replications | Exploratory only |
+| Under relocation the FPR criterion accepts over-budget policies | Empirical, post hoc | 31 / 441 in the large-sample analysis; 0 finite-sample violations | Exploratory; small magnitude (≤ 0.0044) |
+| Direct certification remains valid under relocation | Empirical, pre-registered | Study N, 0 / 200 | Supported (simulation) |
+| Bonferroni direct certification is worse than FPR certification | Empirical, pre-registered secondary | +0.051 [+0.009, +0.092] | Supported (simulation) |
+| A guarantee costs mitigation when budgets are slack | Empirical, pre-registered secondary | FS − ERM = +0.052 [+0.011, +0.093] | Supported (simulation) |
+| Twin transfer | Theory | Proposition 2 is valid but vacuous at m = 300 | Negative |

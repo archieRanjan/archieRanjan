@@ -74,3 +74,16 @@ No error found.
 
   These must be verified against the publishers before submission.
 - AI-assistance disclosure is included in the Acknowledgment. Check the journal's current policy.
+
+
+---
+# Second review pass (after the confirmatory studies)
+
+- **Reviewer A (novelty):** The narrowed claim plus Theorem 1 and Proposition 0 form a coherent but modest contribution. The certificate machinery is still LTT. The positive "relocation" result is post hoc in its strongest form. **Verdict: incremental for TNSM unless real-system or pre-registered relocation evidence is added.**
+- **Reviewer B (math):** Theorem 1's proof was checked step by step (allocation closed form; monotone residuals; overflow-ratio inequality using O ≤ A; delay with positive guarantees). Remaining caveats: the proof covers the fluid model only, and the floating tolerances in the code (1e-12) are not part of the proof. Proposition 0 is a valid construction.
+- **Reviewer C (experiments):** Independent replications and the frozen plan address the earlier dependence and post-hoc concerns. Remaining weaknesses:
+  - still simulation only;
+  - only 8 replications;
+  - budgets mostly slack: certified methods' realised collateral is far below the budgets, so validity is never stressed.
+- **Reviewer D (writing):** The negative primary result is reported clearly. Some list-heavy passages remain.
+- **Reviewer E (integrity):** All numbers are placeholders resolved from JSON; the plan commit precedes the data; deviations are listed in Appendix B. The CALIBURN version is pinned to v2.

@@ -9,3 +9,4 @@
 7. Manuscript built: `manuscript/main.tex` (IEEEtran) and `manuscript/manuscript.pdf` (preview). Review and readiness docs written.
 
 **Next steps (human):** see `manuscript/submission_readiness.md`.
+8. External audit received → plan v2 pre-registered (d5518c3) → Studies C and N run → primary claim not confirmed → manuscript reframed (new title, narrowed claim, Theorem 1 proof, Proposition 0, confirmatory sections, appendices). Records: `manuscript/audit_response.md`, `research_decisions.md` R-13 to R-19.
